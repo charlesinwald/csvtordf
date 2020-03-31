@@ -1,0 +1,2 @@
+# csvtordf
+There is an abundance of widely available data sets across the web. Unfortunately, most data sets contain their information in comma-separated values (CSV) format. The goal of this project is to create a tool for performing the migration of CSV formatted data into an RDF formatted ontology. This entails reading the CSV file, parsing headers into properties, instantiating rows as resources, and outputting the computed ontology to an RDF XML file.
