@@ -32,7 +32,7 @@ fi
 echo "Build Complete! Executing..."
 echo "---------------------------------------------"
 
-java ${package}.${exe}
+java ${package}.${exe} sample.csv
 res=$?
 
 exit ${res}

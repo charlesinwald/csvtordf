@@ -13,10 +13,8 @@
 package csvtordf;
 
 // Java imports
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
+import java.util.Arrays;
 import java.util.Scanner;
 
 // Jena imports
@@ -30,5 +28,30 @@ public class CsvToRdf extends Object {
 
     public static void main (String[] args) {
         System.out.println("Hello world!");
+        readInputFile(args[0]);
     }
+
+  /**
+   * Read in a CSV input file, breaking it down into strings
+   * @param inputFilePath path to CSV input file relative to working directory
+   */
+  private static void readInputFile(String inputFilePath) {
+    try {
+      //Construct buffered reader from supplied command line argument of file path
+      BufferedReader br = new BufferedReader(new FileReader(inputFilePath));
+      String line = br.readLine(); // reads the first line, or nothing
+      while (line != null) {
+        String[] tokens = line.split("\t");
+        System.out.println(Arrays.toString(tokens));
+        line = br.readLine(); // this will eventually set line to null, terminating the loop
+      }
+    } catch (FileNotFoundException e) {
+      System.err.println("Error reading file");
+    } catch (IOException e) {
+      System.err.println("Error parsing file");
+    }
+    catch (ArrayIndexOutOfBoundsException e) {
+      System.err.println("No such file " + inputFilePath);
+    }
+  }
 }
