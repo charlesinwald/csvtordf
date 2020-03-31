@@ -41,7 +41,7 @@ public class CsvToRdf extends Object {
       BufferedReader br = new BufferedReader(new FileReader(inputFilePath));
       String line = br.readLine(); // reads the first line, or nothing
       while (line != null) {
-        String[] tokens = line.split("\t");
+        String[] tokens = line.split(",");
         System.out.println(Arrays.toString(tokens));
         line = br.readLine(); // this will eventually set line to null, terminating the loop
       }
