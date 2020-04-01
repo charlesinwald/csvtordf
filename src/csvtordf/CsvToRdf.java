@@ -48,6 +48,7 @@ public class CsvToRdf extends Object {
     infile.setRequired(true);
     options.addOption(infile);
     options.addOption(new Option("o", "output", true, "Output RDF XML file (default: STDOUT)"));
+    options.addOption(new Option("t", "threads", true, "Number of threads (default: 1)"));
     options.addOption(new Option("i", "interactive", false, "Interactively set RDF attributes"));
     options.addOption(new Option("s", "schema", true, "XML Schema to use as offset data"));
     options.addOption(new Option("v", "verbosity", true, "Verbose logging level"));
@@ -56,6 +57,7 @@ public class CsvToRdf extends Object {
     // Parse arguments
     String schema = "";
     String csvfile = "";
+    int threads = 1;
     String output = "STDOUT"; // technically disallows a user creating a file named "STDOUT"
     boolean interactive = false; // TODO: Save off schema output somewhere
     CommandLineParser parser = new DefaultParser();
@@ -64,8 +66,13 @@ public class CsvToRdf extends Object {
       if(line.hasOption("v")) g_verbosity = Integer.parseInt(line.getOptionValue("v"));
       if(line.hasOption("s")) schema = line.getOptionValue("s");
       if(line.hasOption("o")) output = line.getOptionValue("o");
+      if(line.hasOption("t")) threads = Integer.parseInt(line.getOptionValue("t"));
       interactive = line.hasOption("i");
       csvfile = line.getOptionValue("c");
+    } catch(NumberFormatException e) {
+      System.err.println("Non-Integer Found! " + e.getMessage());
+      formatter.printHelp("csvtordf", options);
+      System.exit(2); 
     } catch(ParseException e) {
       // oops
       System.err.println(e.getMessage());
@@ -73,18 +80,24 @@ public class CsvToRdf extends Object {
       System.exit(2);
     }
 
+    if (threads <= 0) {
+        System.err.println("Error: threads must be a positive integer");
+        System.exit(2);
+    }
+
     // Print application header info
     System.out.println("CSV-To-RDF");
-    System.out.println("  Verbosity: " + g_verbosity);
-    System.out.println("  Interactive: " + interactive);
-    System.out.println("  Schema: " + schema);
-    System.out.println("  CSV File: " + csvfile);
-    System.out.println("  Output File: " + output);
+    System.out.println("  Verbosity   : " + g_verbosity);
+    System.out.println("  Interactive : " + interactive);
+    System.out.println("  Schema      : " + schema);
+    System.out.println("  Threads     : " + threads);
+    System.out.println("  CSV File    : " + csvfile);
+    System.out.println("  Output File : " + output);
     System.out.println("");
 
     // Will load Jena Model
     System.out.println("Reading in CSV file...");
-    readInputFile(csvfile, interactive, schema);
+    readInputFile(csvfile, interactive, schema, threads);
 
     // Will output RDF file (or stdout)
     System.out.println("Writing RDF XML to " + output + "...");
@@ -100,9 +113,10 @@ public class CsvToRdf extends Object {
    * @param inputFilePath - path to CSV input file relative to working directory
    * @param interactive - set whether to run interactively
    * @param schemaFilePath - path to RDF XML Schema file to augment CSV data
+   * @param threads - number of threads for multithreaded parsing
    *
    */
-  private static void readInputFile(String inputFilePath, boolean interactive, String schemaFilePath) {
+  private static void readInputFile(String inputFilePath, boolean interactive, String schemaFilePath, int threads) {
     try {
       //Construct buffered reader from supplied command line argument of file path
       BufferedReader br = new BufferedReader(new FileReader(inputFilePath));
@@ -115,10 +129,20 @@ public class CsvToRdf extends Object {
       if (g_verbosity >= 1) System.out.println("  Initializing model with " + tokens.length + " properties: " + Arrays.toString(tokens));
       initModel(tokens);
 
+      // TODO: Make this multi-threaded
+      //       - Can do round-robin assignment of lines to threads
+      //       - Can divide number of lines evenly from the start
+      //       - Can create a threadpool and have each line pull a free thread (probably more expensive and harder)
+      // TBD: Is a Jena model thread-safe? If not, will need to either...
+      //       - lock model when adding resources to it (easier)
+      //       - collect all resources and add them all at the end (faster)
+      if (threads > 1) {
+          System.out.println("WARNING - multithreading is not supported yet. Running single-threaded");
+      }
+
       // Start gathering resources
       int num = 0; //first result URI is res0, second res1, and so on
       line = br.readLine();
-      // TODO: Make this multithreaded
       if (g_verbosity >= 1) System.out.println("  Adding Resources");
       while (line != null) {
         // split on regex to handle commas existing within quotes for a field
