@@ -16,6 +16,13 @@ srcdir=$(cd $(dirname ${BASH_SOURCE[0]}) && pwd)
 export CLASSPATH="${srcdir}/${jenaloc}/lib/*:${srcdir}"
 echo "CLASSPATH=${CLASSPATH}"
 
+# Pass all arguments to java app
+appargs="$@"
+if [ -z "${appargs}" ]; then
+    # default to sample
+    appargs="-c sample.csv"
+fi
+
 # clean
 echo "Cleaning ${srcdir}/${package}"
 rm -f ${srcdir}/${package}/*.class
@@ -32,7 +39,7 @@ fi
 echo "Build Complete! Executing..."
 echo "---------------------------------------------"
 
-java ${package}.${exe} sample.csv
+java ${package}.${exe} ${appargs}
 res=$?
 
 exit ${res}
