@@ -9,7 +9,7 @@
  * <p>
  * FIXME: Add description of application
  */
-package csvtordf;
+package csvtordf.main;
 
 // Java imports
 
@@ -72,7 +72,7 @@ public class CsvToRdf extends Object {
     } catch(NumberFormatException e) {
       System.err.println("Non-Integer Found! " + e.getMessage());
       formatter.printHelp("csvtordf", options);
-      System.exit(2); 
+      System.exit(2);
     } catch(ParseException e) {
       // oops
       System.err.println(e.getMessage());
@@ -136,6 +136,8 @@ public class CsvToRdf extends Object {
       // TBD: Is a Jena model thread-safe? If not, will need to either...
       //       - lock model when adding resources to it (easier)
       //       - collect all resources and add them all at the end (faster)
+
+      // See https://jena.apache.org/documentation/notes/concurrency-howto.html
       if (threads > 1) {
           System.out.println("WARNING - multithreading is not supported yet. Running single-threaded");
       }
