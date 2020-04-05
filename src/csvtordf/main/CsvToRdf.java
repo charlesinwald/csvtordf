@@ -12,19 +12,50 @@
 package csvtordf.main;
 
 // Java imports
-
 import java.io.*;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.Consumer;
+import java.util.concurrent.*;
 
 // Jena imports
 import org.apache.jena.base.Sys;
 import org.apache.jena.rdf.model.*;
+import org.apache.jena.shared.*;
 
 // CLI parsing
 import org.apache.commons.cli.*;
+
+class MultiThreadCsvProcessor implements Runnable {
+  private final String line;
+  private final int num;
+
+  public MultiThreadCsvProcessor(String line, int num) {
+    this.line = line;
+    this.num = num;
+  }
+
+  @Override
+  public void run() {
+    // split on regex to handle commas existing within quotes for a field
+    String[] tokens = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+    if (CsvToRdf.g_verbosity >= 2) System.out.println("    Res " + num + ": " + Arrays.toString(tokens));
+    //The row is the subject
+    // TBD: Write locks are expensive
+    CsvToRdf.model.enterCriticalSection(Lock.WRITE);
+    try {
+      Resource instance = CsvToRdf.model.createResource(CsvToRdf.prefix + "res" + num);
+      for (int i = 0; i < tokens.length; i++) {
+        //ith property is the predicate
+        //cell is the object
+        instance.addProperty(CsvToRdf.properties.get(i), tokens[i]);
+      }
+    } finally {
+      CsvToRdf.model.leaveCriticalSection();
+    }
+  }
+}
 
 public class CsvToRdf extends Object {
 
@@ -32,9 +63,9 @@ public class CsvToRdf extends Object {
   public static int g_verbosity = 0;
 
   // Jena model definitions
-  private static Model model;
-  private static ArrayList<Property> properties = new ArrayList<>();
-  private static String prefix = "http://example.org/csv#";
+  public static Model model;
+  public static ArrayList<Property> properties = new ArrayList<>();
+  public static String prefix = "http://example.org/csv#";
 
 
   static {
@@ -119,7 +150,8 @@ public class CsvToRdf extends Object {
   private static void readInputFile(String inputFilePath, boolean interactive, String schemaFilePath, int threads) {
     try {
       //Construct buffered reader from supplied command line argument of file path
-      BufferedReader br = new BufferedReader(new FileReader(inputFilePath));
+      FileInputStream fIn = new FileInputStream(inputFilePath);
+      BufferedReader br = new BufferedReader(new InputStreamReader(fIn));
 
       // Get header line (first line)
       String line = br.readLine(); // reads the first line, or nothing
@@ -127,38 +159,42 @@ public class CsvToRdf extends Object {
       String[] tokens = line.split(",");
       // initialize model with properties
       if (g_verbosity >= 1) System.out.println("  Initializing model with " + tokens.length + " properties: " + Arrays.toString(tokens));
-      initModel(tokens);
+      initModel(tokens, interactive, schemaFilePath);
 
-      // TODO: Make this multi-threaded
-      //       - Can do round-robin assignment of lines to threads
-      //       - Can divide number of lines evenly from the start
-      //       - Can create a threadpool and have each line pull a free thread (probably more expensive and harder)
-      // TBD: Is a Jena model thread-safe? If not, will need to either...
-      //       - lock model when adding resources to it (easier)
-      //       - collect all resources and add them all at the end (faster)
+      // Start timer
+      long startTime = System.nanoTime();
 
-      // See https://jena.apache.org/documentation/notes/concurrency-howto.html
-      if (threads > 1) {
-          System.out.println("WARNING - multithreading is not supported yet. Running single-threaded");
-      }
+      // Create thread pool
+      ExecutorService service = Executors.newFixedThreadPool(threads);
 
-      // Start gathering resources
-      int num = 0; //first result URI is res0, second res1, and so on
-      line = br.readLine();
-      if (g_verbosity >= 1) System.out.println("  Adding Resources");
-      while (line != null) {
-        // split on regex to handle commas existing within quotes for a field
-        tokens = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
-        createResource(num, tokens);
-        line = br.readLine(); // this will eventually set line to null, terminating the loop
+      // Pass off line to thread in pool
+      // TODO: Probably better to group into say 100 lines at a time
+      int num = 0;
+      while ((line = br.readLine()) != null) {
+        service.execute(new MultiThreadCsvProcessor(line, num));
         num++;
       }
-      if (g_verbosity >= 1) System.out.println("  Added " + num + " Resources");
+      // Wait for completion
+      service.shutdown();
+      service.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+
+      br.close();
+
+      // stop timer and log
+      long endTime = System.nanoTime();
+      long timeElapsed = endTime - startTime; // nanoseconds
+      System.out.println("  Processed CSV file in " + timeElapsed/1000000 + " ms");
+
     } catch (FileNotFoundException e) {
       System.err.println("File not found: " + inputFilePath);
       System.exit(1);
     } catch (IOException e) {
-      System.err.println("Error parsing file");
+      System.err.println("Error parsing file headers");
+      System.err.println(e.getMessage());
+      System.exit(1);
+    } catch (InterruptedException e) {
+      System.err.println("Error waiting for all threads to terminate");
+      System.err.println(e.getMessage());
       System.exit(1);
     }
 
@@ -170,36 +206,30 @@ public class CsvToRdf extends Object {
    * Create a model and create properties from CSV headers
    *
    * @param headers - first line of CSV file, split on commas
+   * @param interactive - set whether to run interactively
+   * @param schemaFilePath - path to schema XML relative to working directory
    *
    */
-  private static void initModel(String[] headers) {
+  private static void initModel(String[] headers, boolean interactive, String schemaFilePath) {
     //create an empty model
     model = ModelFactory.createDefaultModel();
+
+    if (!schemaFilePath.equals("")) {
+        // TODO: Read in schema file
+    }
+    if (interactive) {
+        // TODO: Run wizard to create schema
+        // TBD: How to handle if both schema and interactive provided?
+    }
+
     model.setNsPrefix("csv", prefix);
     //Iterate through headers, creating them as properties to model
     for (String header : headers) {
       Property property = model.createProperty(prefix, header);
       properties.add(property);
     }
-  }
 
-  /**
-   * Turns a row of CSV into a resource, adding each cell as a property
-   *
-   * @param tokens - the row of CSV
-   *
-   */
-  private static void createResource(int num, String[] tokens) {
-   if (g_verbosity >= 2) System.out.println("    Res " + num + ": " + Arrays.toString(tokens));
-    //The row is the subject
-    Resource instance = model.createResource(prefix + "res" + num);
-    for (int i = 0; i < tokens.length; i++) {
-      //ith property is the predicate
-      //cell is the object
-      instance.addProperty(properties.get(i), tokens[i]);
-    }
   }
-
 
   /**
    *
