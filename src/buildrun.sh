@@ -1,21 +1,26 @@
 #!/bin/bash
 
-##################################
-#                                #
-# Script to clean, build, and    #
-# run CsvToRdf application       #
-# in linux environment.          #
-#                                #
-##################################
+###################################
+#                                 #
+# Script to clean, build, and     #
+# run CsvToRdf application        #
+# in linux environment.           #
+#                                 #
+# NOTE: Java 9 or later required! #
+#                                 #
+###################################
 package="csvtordf"
 exe="CsvToRdf"
 jenaloc="apache-jena-3.14.0"
+javafxloc="javafx-sdk-11.0.2"
+javafxmods="controls"
 junit="junit"
 
 srcdir=$(cd $(dirname ${BASH_SOURCE[0]}) && pwd)
 
 export CLASSPATH="${srcdir}/${jenaloc}/lib/*:${srcdir}/${junit}/*:${srcdir}"
 echo "CLASSPATH=${CLASSPATH}"
+MODULEPATH="${srcdir}/${javafxloc}/lib"
 
 # Pass all arguments to java app
 appargs="$@"
@@ -30,7 +35,11 @@ rm -f ${srcdir}/${package}/*.class
 
 # build
 echo "Building ${package}/*.java"
-javac ${srcdir}/${package}/main/*.java
+modules=""
+for module in ${javafxmods}; do
+    modules="javafx.${module} ${modules}"
+done
+javac --module-path ${MODULEPATH} --add-modules ${modules} ${srcdir}/${package}/main/*.java
 res=$?
 if [ ${res} -ne 0 ]; then
     exit ${res}
@@ -49,7 +58,7 @@ fi
 echo "Testing Complete! Running..."
 echo "---------------------------------------------"
 
-java ${package}.main.${exe} ${appargs}
+java --module-path ${MODULEPATH} --add-modules ${modules} -Dprism.order=sw ${package}.main.${exe} ${appargs}
 res=$?
 
 exit ${res}

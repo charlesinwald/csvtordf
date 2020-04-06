@@ -19,6 +19,9 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.concurrent.*;
 
+// Java GUI
+import javafx.application.Application;
+
 // Jena imports
 import org.apache.jena.base.Sys;
 import org.apache.jena.rdf.model.*;
@@ -220,6 +223,7 @@ public class CsvToRdf extends Object {
     if (interactive) {
         // TODO: Run wizard to create schema
         // TBD: How to handle if both schema and interactive provided?
+        Application.launch(CsvWizard.class, headers);
     }
 
     model.setNsPrefix("csv", prefix);
