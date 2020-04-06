@@ -58,7 +58,12 @@ fi
 echo "Testing Complete! Running..."
 echo "---------------------------------------------"
 
+#TODO this should eventually be combined into a single graphical app
+#Command line
 java --module-path ${MODULEPATH} --add-modules ${modules} -Dprism.order=sw ${package}.main.${exe} ${appargs}
+#GUI
+java --module-path ${MODULEPATH} --add-modules ${modules} -Dprism.order=sw ${package}.main.CsvWizard ${appargs}
+
 res=$?
 
 exit ${res}

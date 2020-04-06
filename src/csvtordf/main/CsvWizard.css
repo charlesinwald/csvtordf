@@ -1,0 +1,19 @@
+#submit-button {
+    -fx-background-color: #8dcc6a;
+    -fx-border-radius: 2em;
+    -fx-background-radius: 5em;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+#openfile-button {
+    -fx-background-color: #5290bf;
+    -fx-border-radius: 2em;
+    -fx-background-radius: 5em;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+#prefix-label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-scale: 2;
+}

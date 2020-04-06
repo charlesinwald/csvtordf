@@ -150,7 +150,7 @@ public class CsvToRdf extends Object {
    * @param threads - number of threads for multithreaded parsing
    *
    */
-  private static void readInputFile(String inputFilePath, boolean interactive, String schemaFilePath, int threads) {
+  public static void readInputFile(String inputFilePath, boolean interactive, String schemaFilePath, int threads) {
     try {
       //Construct buffered reader from supplied command line argument of file path
       FileInputStream fIn = new FileInputStream(inputFilePath);
@@ -213,7 +213,7 @@ public class CsvToRdf extends Object {
    * @param schemaFilePath - path to schema XML relative to working directory
    *
    */
-  private static void initModel(String[] headers, boolean interactive, String schemaFilePath) {
+  public static void initModel(String[] headers, boolean interactive, String schemaFilePath) {
     //create an empty model
     model = ModelFactory.createDefaultModel();
 
@@ -240,7 +240,7 @@ public class CsvToRdf extends Object {
    * Print model for debugging purposes
    *
    */
-  private static void printModel() {
+  public static void printModel() {
     // list the statements in the Model
     StmtIterator iter = model.listStatements();
 
@@ -271,7 +271,7 @@ public class CsvToRdf extends Object {
    * @params outFilePath - path to output RDF XML file or STDOUT
    *
    */
-  private static void outputModel(String outFilePath) {
+  public static void outputModel(String outFilePath) {
     try {
       if (outFilePath.equals("STDOUT")) {
         System.out.println("");
