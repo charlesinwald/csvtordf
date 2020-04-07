@@ -19,16 +19,9 @@ export CLASSPATH="lib/*:${srcdir}"
 echo "CLASSPATH=${CLASSPATH}"
 MODULEPATH="lib"
 
-# Pass all arguments to java app
-appargs="$@"
-if [ -z "${appargs}" ]; then
-    # default to sample
-    appargs="-c sample.csv"
-fi
-
 # clean
 echo "Cleaning ${srcdir}/${package}"
-rm -f ${srcdir}/${package}/*.class
+rm -rf ${srcdir}/${package}/*/*.class
 
 # build
 echo "Building ${package}/*.java"
