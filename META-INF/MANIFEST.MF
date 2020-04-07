@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: CSV To RDF
-Bundle-SymbolicName: org.protege.owl.examples.tab;singleton:=true
+Bundle-SymbolicName: csvtordf;singleton:=true
 Bundle-Category: protege
 Bundle-Description: A Plugin allowing CSV conversion to RDF
 Bundle-Vendor: Lehigh University
