@@ -75,7 +75,7 @@ public class CsvWizard extends Application {
         stage.setTitle("CSVtoRDF");
         stage.getIcons().add(
                 new Image(
-                        CsvWizard.class.getResourceAsStream("csvtordflogo2.png")));
+                        CsvWizard.class.getResourceAsStream("icon.png")));
         Screen screen = Screen.getPrimary();
         Rectangle2D bounds = screen.getVisualBounds();
 
@@ -114,6 +114,7 @@ public class CsvWizard extends Application {
                 CsvToRdf.readInputFile(selectedFilePath, interactiveCheckBox.isSelected(), "", numberOfThreads);
                 modelLoaded = true;
                 saveButton.setVisible(true);
+                // TODO: Show conversion time
                 viewModel();
 
             }
@@ -187,6 +188,7 @@ public class CsvWizard extends Application {
         saveButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
+                // TODO: Prompt for file
                 CsvToRdf.outputModel("STDOUT");
             }
         });;
