@@ -1,12 +1,12 @@
 #submit-button {
-    -fx-background-color: #8dcc6a;
+    -fx-background-color: #91c499;
     -fx-border-radius: 2em;
     -fx-background-radius: 5em;
     -fx-text-fill: white;
     -fx-font-weight: bold;
 }
 #openfile-button {
-    -fx-background-color: #5290bf;
+    -fx-background-color: #cfd11a;
     -fx-border-radius: 2em;
     -fx-background-radius: 5em;
     -fx-text-fill: white;
@@ -16,4 +16,14 @@
     -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-font-scale: 2;
+}
+#left-pane {
+    -fx-background-color: #808f85;
+    -fx-text-fill: white;
+}
+#center-pane {
+    -fx-background-color: #f2e9dc;
+}
+#prefix-field {
+    -fx-background-color: #f2e9dc;
 }

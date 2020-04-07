@@ -12,15 +12,13 @@
 package csvtordf.main;
 
 // Java imports
+
 import java.io.*;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.function.Consumer;
-import java.util.concurrent.*;
 
 // Java GUI
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
@@ -37,123 +35,179 @@ import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.event.*;
+import org.apache.jena.rdf.model.*;
 
 // Jena imports
-import org.apache.jena.base.Sys;
-import org.apache.jena.rdf.model.*;
-import org.apache.jena.shared.*;
-import org.junit.jupiter.params.shadow.com.univocity.parsers.csv.Csv;
+
 
 public class CsvWizard extends Application {
 
-  private String selectedFilePath;
+    public static final String LEFT_PANE_TITLE = "Options";
+    public static final int DEFAULT_NUMBER_OF_THREADS = 1;
+    //The maximum amount of threads they should be able to run
+    int processors = Runtime.getRuntime().availableProcessors();
+    private String selectedFilePath;
+    private CheckBox interactiveCheckBox;
+    private int numberOfThreads = DEFAULT_NUMBER_OF_THREADS;
+    private Slider multithreadingSlider = new Slider(1, processors, DEFAULT_NUMBER_OF_THREADS);
+    ;
+    private Boolean modelLoaded = false;
+    private VBox leftPane;
 
-  @Override
-  public void start(Stage stage) {
+    /**
+     * The main entry point of the application, (running on the JavaFX application thread)
+     *
+     * @param stage Top level of the JavaFX container; most of the application is built upon it,
+     *              stage.show() intuitively shows everything you add
+     */
+    @Override
+    public void start(Stage stage) {
+        BorderPane border = new BorderPane();
+        HBox hbox = buildTopBar();
+        border.setTop(hbox);
+        border.setLeft(buildLeftPane());
+        border.setCenter(buildCenterPane());
+        Scene scene = new Scene(border, 1024, 768);
+        scene.getStylesheets().add("csvtordf/main/CsvWizard.css");
 
-    BorderPane border = new BorderPane();
-    HBox hbox = addHBox();
-    border.setTop(hbox);
-    border.setLeft(addVBox());
-    Scene scene = new Scene(border, 1024, 768);
-    scene.getStylesheets().add("csvtordf/main/CsvWizard.css");
+        stage.setScene(scene);
+        stage.setTitle("CSVtoRDF");
+        stage.getIcons().add(
+                new Image(
+                        CsvWizard.class.getResourceAsStream("csvtordflogo2.png")));
+        Screen screen = Screen.getPrimary();
+        Rectangle2D bounds = screen.getVisualBounds();
 
-    stage.setScene(scene);
-    stage.setTitle("CSVtoRDF");
-    stage.getIcons().add(
-            new Image(
-                    CsvWizard.class.getResourceAsStream( "icon.png" )));
-    Screen screen = Screen.getPrimary();
-    Rectangle2D bounds = screen.getVisualBounds();
-
-    stage.setX(bounds.getMinX());
-    stage.setY(bounds.getMinY());
-    stage.setWidth(bounds.getWidth());
-    stage.setHeight(bounds.getHeight());
-    stage.show();
-
-
-
-  }
-
-  public HBox addHBox() {
-    Label l = new Label("Prefix:");
-    l.setId("prefix-label");
-    l.setAlignment(Pos.CENTER_RIGHT);
-    l.setPadding(new Insets(5,5,5,5));
-
-    Label currentFile = new Label();
-    currentFile.setId("prefix-label");
-    currentFile.setAlignment(Pos.CENTER_RIGHT);
-    currentFile.setPadding(new Insets(5,5,5,5));
+        stage.setX(bounds.getMinX());
+        stage.setY(bounds.getMinY());
+        stage.setWidth(bounds.getWidth());
+        stage.setHeight(bounds.getHeight());
+        stage.show();
 
 
-    TextField prefixField = new TextField(CsvToRdf.prefix);
-    prefixField.setPrefColumnCount(30);
+    }
 
-    Button submit = new Button("Submit");
-    submit.setPrefSize(100, 20);
-    submit.setId("submit-button");
-    submit.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent e) {
-        CsvToRdf.prefix = prefixField.getText();
-        //TODO UI elements for interactive, schema and threads
-        CsvToRdf.readInputFile(selectedFilePath, false, "", 1);
+    public HBox buildTopBar() {
+        Label l = new Label("Prefix:");
+        l.setId("prefix-label");
+        l.setAlignment(Pos.CENTER_RIGHT);
+        l.setPadding(new Insets(5, 5, 5, 5));
+
+        Label currentFile = new Label();
+        currentFile.setId("prefix-label");
+        currentFile.setAlignment(Pos.CENTER_RIGHT);
+        currentFile.setPadding(new Insets(5, 5, 5, 5));
+
+        TextField prefixField = new TextField(CsvToRdf.prefix);
+        prefixField.setId("prefix-field");
+        prefixField.setPrefColumnCount(30);
+
+        Button submit = new Button("Convert");
+        submit.setPrefSize(100, 20);
+        submit.setId("submit-button");
+        submit.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                CsvToRdf.prefix = prefixField.getText();
+                //TODO UI elements for interactive, schema and threads
+                CsvToRdf.readInputFile(selectedFilePath, interactiveCheckBox.isSelected(), "", numberOfThreads);
+                modelLoaded = true;
+                viewModel();
 
 //        stage.close();
-      }
-    });
-    submit.setVisible(false);
+            }
+        });
+        submit.setVisible(false);
 
-    Button openfile = new Button("Open CSV");
-    openfile.setPrefSize(100, 20);
-    openfile.setId("openfile-button");
-    openfile.setOnAction(new EventHandler<ActionEvent>() {
-      @Override
-      public void handle(ActionEvent e) {
-        FileChooser fileChooser = new FileChooser();
-        File selectedFile = fileChooser.showOpenDialog(null);
-        //TODO handle if they supply incorrect path
-        selectedFilePath = selectedFile.getPath();
-        System.out.println(selectedFilePath);
-        currentFile.setText("CSV File: " + selectedFilePath);
-        submit.setVisible(true);
-      }
-    });
-
-
-    HBox hbox = new HBox();
-    hbox.setPadding(new Insets(15, 12, 15, 12));
-    hbox.setSpacing(10);
-    hbox.setStyle("-fx-background-color: #ea6652;");
+        Button openfile = new Button("Open CSV");
+        openfile.setPrefSize(100, 20);
+        openfile.setId("openfile-button");
+        openfile.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                FileChooser fileChooser = new FileChooser();
+                File selectedFile = fileChooser.showOpenDialog(null);
+                //TODO handle if they supply incorrect path
+                selectedFilePath = selectedFile.getPath();
+                System.out.println(selectedFilePath);
+                currentFile.setText("CSV File: " + selectedFilePath);
+                submit.setVisible(true);
+            }
+        });
 
 
+        HBox hbox = new HBox();
+        hbox.setPadding(new Insets(15, 12, 15, 12));
+        hbox.setSpacing(10);
+        hbox.setStyle("-fx-background-color: #595959;");
 
-    hbox.getChildren().addAll(l, prefixField,openfile, currentFile, submit);
 
-    return hbox;
-  }
+        hbox.getChildren().addAll(l, prefixField, openfile, currentFile, submit);
 
-  public VBox addVBox()
-  {
-    VBox vbox = new VBox();
-    vbox.setPadding(new Insets(10));
-    vbox.setSpacing(8);
-
-    Text title = new Text("Data");
-    title.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-    vbox.getChildren().add(title);
-
-    Text options[] = new Text[]{
-            new Text("1"),
-            new Text("2"),
-            new Text("3"),
-            new Text("4")};
-    for (int i=0; i<4; i++) {
-      VBox.setMargin(options[i], new Insets(0, 0, 0, 8));
-      vbox.getChildren().add(options[i]);
+        return hbox;
     }
-    return vbox;
-  }
+
+    public VBox buildLeftPane() {
+        VBox leftPane = new VBox();
+        leftPane.setPadding(new Insets(10));
+        leftPane.setSpacing(16);
+        leftPane.setId("left-pane");
+
+        Text leftPaneTitle = new Text(LEFT_PANE_TITLE);
+        leftPaneTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        leftPane.getChildren().add(leftPaneTitle);
+
+        interactiveCheckBox = new CheckBox("Interactive");
+        leftPane.getChildren().add(interactiveCheckBox);
+
+
+        Text numberOfThreadsLabel = new Text(String.format("Using %d/%d available threads on your machine", DEFAULT_NUMBER_OF_THREADS, processors));
+        leftPane.getChildren().add(numberOfThreadsLabel);
+
+
+        multithreadingSlider.setBlockIncrement(1);
+        multithreadingSlider.setMajorTickUnit(1);
+        multithreadingSlider.setMinorTickCount(0);
+        multithreadingSlider.setShowTickLabels(true);
+        multithreadingSlider.setSnapToTicks(true);
+        multithreadingSlider.setShowTickLabels(true);
+        multithreadingSlider.valueProperty().addListener(new ChangeListener<Number>() {
+            public void changed(ObservableValue<? extends Number> ov,
+                                Number old_val, Number new_val) {
+                numberOfThreads = new_val.intValue();
+                numberOfThreadsLabel.setText(String.format("Using %d/%d available threads on your machine", numberOfThreads, processors));
+            }
+        });
+        leftPane.getChildren().add(multithreadingSlider);
+
+
+        return leftPane;
+    }
+
+    public VBox buildCenterPane() {
+        leftPane = new VBox();
+        leftPane.setPadding(new Insets(10));
+        leftPane.setSpacing(16);
+        leftPane.setId("center-pane");
+
+
+        return leftPane;
+    }
+
+    /**
+     * Print model for debugging purposes
+     */
+    public void viewModel() {
+        if (modelLoaded) {
+            // list the statements in the Model
+            StmtIterator iter = CsvToRdf.model.listStatements();
+
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            CsvToRdf.model.write(byteArrayOutputStream, "RDF/XML-ABBREV");
+            Text rdfText = new Text(byteArrayOutputStream.toString());
+
+            leftPane.getChildren().add(rdfText);
+        }
+    }
 }
+
