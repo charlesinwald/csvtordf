@@ -53,6 +53,7 @@ public class CsvWizard extends Application {
     ;
     private Boolean modelLoaded = false;
     private VBox leftPane;
+    private Button saveButton;
 
     /**
      * The main entry point of the application, (running on the JavaFX application thread)
@@ -112,9 +113,9 @@ public class CsvWizard extends Application {
                 //TODO UI elements for interactive, schema and threads
                 CsvToRdf.readInputFile(selectedFilePath, interactiveCheckBox.isSelected(), "", numberOfThreads);
                 modelLoaded = true;
+                saveButton.setVisible(true);
                 viewModel();
 
-//        stage.close();
             }
         });
         submit.setVisible(false);
@@ -180,6 +181,16 @@ public class CsvWizard extends Application {
         });
         leftPane.getChildren().add(multithreadingSlider);
 
+        saveButton = new Button("Save RDF");
+        saveButton.setVisible(false);
+        saveButton.setId("save-button");
+        saveButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                CsvToRdf.outputModel("STDOUT");
+            }
+        });;
+        leftPane.getChildren().add(saveButton);
 
         return leftPane;
     }
@@ -194,19 +205,25 @@ public class CsvWizard extends Application {
         return leftPane;
     }
 
-    /**
-     * Print model for debugging purposes
-     */
     public void viewModel() {
         if (modelLoaded) {
-            // list the statements in the Model
-            StmtIterator iter = CsvToRdf.model.listStatements();
-
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            CsvToRdf.model.write(byteArrayOutputStream, "RDF/XML-ABBREV");
-            Text rdfText = new Text(byteArrayOutputStream.toString());
 
-            leftPane.getChildren().add(rdfText);
+            CsvToRdf.model.write(byteArrayOutputStream, "RDF/XML-ABBREV");
+
+            Text rdfText = new Text(byteArrayOutputStream.toString());
+            rdfText.setId("rdf-text");
+            ScrollPane scrollPane = new ScrollPane();
+            // Set content for ScrollPane
+            scrollPane.setContent(rdfText);
+
+            // Always show vertical scroll bar
+            scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+
+            // Horizontal scroll bar is only displayed when needed
+            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+            leftPane.getChildren().add(scrollPane);
         }
     }
 }
