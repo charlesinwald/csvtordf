@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<plugin>
+   <extension id="CsvToRdf"
+              point="org.protege.editor.core.application.EditorKitMenuAction">
+      <name value="CSV To RDF"/>
+      <path value="org.protege.editor.owl.menu.tools/SlotG-A"/>
+      <toolTip value="Convert CSV File to RDF"/>
+      <class value="csvtordf.main.CsvPlugin"/>
+      <editorKitId value="any"/>
+   </extension>
+</plugin>
+
