@@ -33,10 +33,5 @@ public class CsvPlugin extends ProtegeOWLAction {
   public void actionPerformed(ActionEvent event) {
     String[] args = {};
     Application.launch(CsvWizard.class, args);
-    StringBuilder message = new StringBuilder("This example menu item is under the Tools menu.\n");
-    message.append("The currently selected class is ");
-    message.append(getOWLWorkspace().getOWLSelectionModel().getLastSelectedClass());
-    message.append(".");
-    JOptionPane.showMessageDialog(getOWLWorkspace(), message.toString());	
   }
 }
