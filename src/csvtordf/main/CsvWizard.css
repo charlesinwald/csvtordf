@@ -30,7 +30,7 @@
 #save-button {
     -fx-background-color: #91c499;
     -fx-border-radius: 2em;
-    -fx-background-radius: 5em;
+    /*-fx-background-radius: 5em;*/
     -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-font-size: 18;

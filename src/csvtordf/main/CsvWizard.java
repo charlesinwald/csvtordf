@@ -52,7 +52,7 @@ public class CsvWizard extends Application {
     private Slider multithreadingSlider = new Slider(1, processors, DEFAULT_NUMBER_OF_THREADS);
     ;
     private Boolean modelLoaded = false;
-    private VBox leftPane;
+    private VBox centerPane;
     private Button saveButton;
 
     /**
@@ -155,7 +155,7 @@ public class CsvWizard extends Application {
         leftPane.setSpacing(16);
         leftPane.setId("left-pane");
 
-        Text leftPaneTitle = new Text(LEFT_PANE_TITLE);
+        Label leftPaneTitle = new Label(LEFT_PANE_TITLE);
         leftPaneTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         leftPane.getChildren().add(leftPaneTitle);
 
@@ -163,16 +163,15 @@ public class CsvWizard extends Application {
         leftPane.getChildren().add(interactiveCheckBox);
 
 
-        Text numberOfThreadsLabel = new Text(String.format("Using %d/%d available threads on your machine", DEFAULT_NUMBER_OF_THREADS, processors));
+        Label numberOfThreadsLabel = new Label(String.format("Using %d/%d available threads on your machine", DEFAULT_NUMBER_OF_THREADS, processors));
         leftPane.getChildren().add(numberOfThreadsLabel);
 
 
-        multithreadingSlider.setBlockIncrement(1);
+       multithreadingSlider.setBlockIncrement(1);
         multithreadingSlider.setMajorTickUnit(1);
         multithreadingSlider.setMinorTickCount(0);
-        multithreadingSlider.setShowTickLabels(true);
         multithreadingSlider.setSnapToTicks(true);
-        multithreadingSlider.setShowTickLabels(true);
+        //multithreadingSlider.setShowTickLabels(true);
         multithreadingSlider.valueProperty().addListener(new ChangeListener<Number>() {
             public void changed(ObservableValue<? extends Number> ov,
                                 Number old_val, Number new_val) {
@@ -198,13 +197,13 @@ public class CsvWizard extends Application {
     }
 
     public VBox buildCenterPane() {
-        leftPane = new VBox();
-        leftPane.setPadding(new Insets(10));
-        leftPane.setSpacing(16);
-        leftPane.setId("center-pane");
+        centerPane = new VBox();
+        centerPane.setPadding(new Insets(10));
+        centerPane.setSpacing(16);
+        centerPane.setId("center-pane");
 
 
-        return leftPane;
+        return centerPane;
     }
 
     public void viewModel() {
@@ -213,7 +212,7 @@ public class CsvWizard extends Application {
 
             CsvToRdf.model.write(byteArrayOutputStream, "RDF/XML-ABBREV");
 
-            Text rdfText = new Text(byteArrayOutputStream.toString());
+            Label rdfText = new Label(byteArrayOutputStream.toString());
             rdfText.setId("rdf-text");
             ScrollPane scrollPane = new ScrollPane();
             // Set content for ScrollPane
@@ -225,7 +224,7 @@ public class CsvWizard extends Application {
             // Horizontal scroll bar is only displayed when needed
             scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
 
-            leftPane.getChildren().add(scrollPane);
+            centerPane.getChildren().add(scrollPane);
         }
     }
 }
