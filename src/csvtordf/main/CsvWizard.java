@@ -69,10 +69,10 @@ public class CsvWizard extends Application {
         border.setLeft(buildLeftPane());
         border.setCenter(buildCenterPane());
         Scene scene = new Scene(border, 1024, 768);
-        scene.getStylesheets().add("csvtordf/main/CsvWizard.css");
+        scene.getStylesheets().add(this.getClass().getResource("CsvWizard.css").toExternalForm());
 
         stage.setScene(scene);
-        stage.setTitle("CSVtoRDF");
+        stage.setTitle("CSV to RDF Converter");
         stage.getIcons().add(
                 new Image(
                         CsvWizard.class.getResourceAsStream("icon.png")));
