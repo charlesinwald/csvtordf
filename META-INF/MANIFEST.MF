@@ -47,6 +47,7 @@ Bundle-ClassPath: .,
  lib/slf4j-log4j12-1.7.26.jar
 Import-Package: org.osgi.framework,
  javax.swing,
+ javax.xml.datatype,
  javax.swing.border,
  javax.swing.colorchooser,
  javax.swing.event,
@@ -78,3 +79,4 @@ Require-Bundle: org.eclipse.equinox.registry,
  org.protege.editor.core.application,
  org.protege.editor.owl,
  org.semanticweb.owl.owlapi
+Bundle-NativeCode: bin/combase.dll
