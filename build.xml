@@ -44,6 +44,8 @@
    <property name = "protege.plugins"   location="${protege.home}/plugins"/>
    <property name = "run.config"        location="${protege.home}/config.xml"/>
 
+   <property name="guava"
+             location="${protege.common}/guava.jar"/>
    <property name="equinox.common" 
              location="${protege.common}/org.eclipse.equinox.common.jar"/>
    <property name="equinox.registry"
@@ -117,12 +119,14 @@
 	     <available file="${equinox.common}" type = "file"/>
 	     <available file="${equinox.registry}" type = "file"/>
 	     <available file="${owl.editor.jar}" type = "file"/>
+             <available file="${guava}" type="file"/>
          <available file="${owl.lib}" type="file"/>
        </and>
      </condition>
      <path id = "project.classpath">    
        <pathelement location="${protege.osgi}"/>
        <pathelement location="${protege.lib}"/>
+       <pathelement location="${guava}"/>
        <pathelement location="${equinox.common}"/>
        <pathelement location="${equinox.registry}"/>
        <pathelement location="${owl.editor.jar}"/>
@@ -150,7 +154,8 @@
    <target name = "buildlibs" depends="checkProtegeLibsAndReport">
        <unjar dest="${build}"
               src="${common.lib}">
-           <patternset>
+       <patternset>
+	       <include name = "**/guava.jar"/>
                <include name = "**/log4j.jar"/>
                <include name = "**/looks.jar"/>
            </patternset>

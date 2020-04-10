@@ -42,6 +42,7 @@ import org.apache.jena.rdf.model.*;
 
 // Protege Imports
 import org.protege.editor.owl.model.OWLModelManager;
+import org.protege.editor.owl.ui.action.ProtegeOWLAction;
 
 
 public class CsvWizard extends Application {
@@ -57,6 +58,7 @@ public class CsvWizard extends Application {
     private Boolean modelLoaded = false;
     private VBox centerPane;
     private Button saveButton;
+    public static OWLModelManager modelManager;
     private boolean runAsPlugin = false;
 
     /**
@@ -116,7 +118,8 @@ public class CsvWizard extends Application {
         prefixField.setPrefColumnCount(30);
         if (runAsPlugin) {
           // Use Protege IRI
-          //getOwlModelManager().getActiveOntology()
+	  String iri = modelManager.getActiveOntology().getOntologyID().getOntologyIRI().get().toString() + "#";
+          prefixField.setText(iri);
           prefixField.setDisable(true);
         }
 

@@ -71,6 +71,7 @@ Import-Package: org.osgi.framework,
  org.xml.sax,
  org.xml.sax.ext,
  org.xml.sax.helpers,
+ com.google.common.base,
  javax.xml.parsers
 Bundle-Version: 1.0.3
 Bundle-Activator: org.protege.editor.core.plugin.DefaultPluginActivator 
