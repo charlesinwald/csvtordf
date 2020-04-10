@@ -14,6 +14,7 @@ package csvtordf.main;
 // Java imports
 
 import java.io.*;
+import java.util.List;
 
 // Java GUI
 import javafx.application.Application;
@@ -35,9 +36,12 @@ import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.event.*;
+
+// Jena Imports
 import org.apache.jena.rdf.model.*;
 
-// Jena imports
+// Protege Imports
+import org.protege.editor.owl.model.OWLModelManager;
 
 
 public class CsvWizard extends Application {
@@ -50,10 +54,10 @@ public class CsvWizard extends Application {
     private CheckBox interactiveCheckBox;
     private int numberOfThreads = DEFAULT_NUMBER_OF_THREADS;
     private Slider multithreadingSlider = new Slider(1, processors, DEFAULT_NUMBER_OF_THREADS);
-    ;
     private Boolean modelLoaded = false;
     private VBox centerPane;
     private Button saveButton;
+    private boolean runAsPlugin = false;
 
     /**
      * The main entry point of the application, (running on the JavaFX application thread)
@@ -63,6 +67,14 @@ public class CsvWizard extends Application {
      */
     @Override
     public void start(Stage stage) {
+        // Set if called as a plugin for Protege
+        Parameters params = getParameters();
+        List<String> list = params.getRaw();
+        if (list.size() > 0 && list.get(0).equals("plugin")) {
+          runAsPlugin = true;
+	}
+
+        // Setup scene
         BorderPane border = new BorderPane();
         HBox hbox = buildTopBar();
         border.setTop(hbox);
@@ -102,6 +114,11 @@ public class CsvWizard extends Application {
         TextField prefixField = new TextField(CsvToRdf.prefix);
         prefixField.setId("prefix-field");
         prefixField.setPrefColumnCount(30);
+        if (runAsPlugin) {
+          // Use Protege IRI
+          //getOwlModelManager().getActiveOntology()
+          prefixField.setDisable(true);
+        }
 
         Button submit = new Button("Convert");
         submit.setPrefSize(100, 20);

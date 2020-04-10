@@ -31,7 +31,7 @@ public class CsvPlugin extends ProtegeOWLAction {
   public void dispose() throws Exception {}
 
   public void actionPerformed(ActionEvent event) {
-    String[] args = {};
+    String[] args = {"plugin"};
     Application.launch(CsvWizard.class, args);
   }
 }
