@@ -10,6 +10,7 @@
 
    <property environment="env"/>
    <property name = "protege.home"      location="${env.PROTEGE_HOME}"/>
+   <property name = "protege.osgi"      location="${protege.home}/bin/org.apache.felix.main.jar"/>
    <property file="${protege.home}/build.properties"/>
    <property file="local.properties"/>
    <property name = "bundlor.home"      location="${env.BUNDLOR_HOME}"/>
