@@ -27,6 +27,13 @@ elif [[ "${PATH}" != *"ant"* ]]; then
 	exit 2
 fi
 
+# WORKAROUND get version of jfxrt bundled with Protege JRE
+rm -f lib/jfxrt.jar && cp "${PROTEGE_HOME}/jre/lib/ext/jfxrt.jar" lib/jfxrt.jar
+if [ $? -ne 0 ]; then
+    echo "ERROR - failed copy jfxrt.jar from ${PROTEGE_HOME}/jre/bin/ext/"
+    exit 1
+fi
+
 # ant build
 echo "Running ant install..."
 rm -rf build/ && ant install
