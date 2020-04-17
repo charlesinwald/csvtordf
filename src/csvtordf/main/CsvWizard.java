@@ -60,6 +60,7 @@ public class CsvWizard extends Application {
     private Button saveButton;
     public static OWLModelManager modelManager;
     private boolean runAsPlugin = false;
+    private String selectedFileName;
 
     /**
      * The main entry point of the application, (running on the JavaFX application thread)
@@ -130,8 +131,8 @@ public class CsvWizard extends Application {
             @Override
             public void handle(ActionEvent e) {
                 CsvToRdf.prefix = prefixField.getText();
-                //TODO UI elements for interactive, schema and threads
-                CsvToRdf.readInputFile(selectedFilePath, interactiveCheckBox.isSelected(), "", numberOfThreads);
+                //TODO UI elements for schema
+                CsvToRdf.readInputFile(selectedFilePath, false, "", numberOfThreads);
                 modelLoaded = true;
                 saveButton.setVisible(true);
                 // TODO: Show conversion time
@@ -148,8 +149,12 @@ public class CsvWizard extends Application {
             @Override
             public void handle(ActionEvent e) {
                 FileChooser fileChooser = new FileChooser();
+                FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("CSV files (*.csv)", "*.csv");
+                fileChooser.getExtensionFilters().add(extFilter);
+
                 File selectedFile = fileChooser.showOpenDialog(null);
                 //TODO handle if they supply incorrect path
+                selectedFileName = selectedFile.getName().replaceFirst("[.][^.]+$", "");;
                 selectedFilePath = selectedFile.getPath();
                 System.out.println(selectedFilePath);
                 currentFile.setText("CSV File: " + selectedFilePath);
@@ -179,15 +184,15 @@ public class CsvWizard extends Application {
         leftPaneTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         leftPane.getChildren().add(leftPaneTitle);
 
-        interactiveCheckBox = new CheckBox("Interactive");
-        leftPane.getChildren().add(interactiveCheckBox);
+//        interactiveCheckBox = new CheckBox("Interactive");
+//        leftPane.getChildren().add(interactiveCheckBox);
 
 
         Label numberOfThreadsLabel = new Label(String.format("Using %d/%d available threads on your machine", DEFAULT_NUMBER_OF_THREADS, processors));
         leftPane.getChildren().add(numberOfThreadsLabel);
 
 
-       multithreadingSlider.setBlockIncrement(1);
+        multithreadingSlider.setBlockIncrement(1);
         multithreadingSlider.setMajorTickUnit(1);
         multithreadingSlider.setMinorTickCount(0);
         multithreadingSlider.setSnapToTicks(true);
@@ -207,8 +212,20 @@ public class CsvWizard extends Application {
         saveButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                // TODO: Prompt for file
-                CsvToRdf.outputModel("STDOUT");
+                FileChooser fileChooser = new FileChooser();
+                fileChooser.setTitle("Save " + selectedFileName + " as RDF");
+                //Specify we are saving RDF files here
+                FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("RDF files (*.rdf)", "*.rdf");
+                fileChooser.getExtensionFilters().add(extFilter);
+                //Default name for file is the input file's name
+                fileChooser.setInitialFileName(selectedFileName + ".rdf");
+
+                //Show save file dialog
+                File file = fileChooser.showSaveDialog(null);
+
+                if (file != null) {
+                    CsvToRdf.outputModel(file.getAbsolutePath());
+                }
             }
         });;
         leftPane.getChildren().add(saveButton);
