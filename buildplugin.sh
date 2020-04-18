@@ -36,7 +36,7 @@ fi
 
 # WORKAROUND - get version of jfxrt bundled with Protege JRE
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  rm -f lib/jfxrt.jar && cp "${PROTEGE_HOME}/Contents/Plugins/JRE/Contents/Home/jre/lib/ext/jfxrt.jar" lib/jfxrt.jar
+  rm -f lib/jfxrt.jar && cp "${PROTEGE_HOME}/Protégé.app/Contents/Plugins/JRE/Contents/Home/jre/lib/ext/jfxrt.jar" lib/jfxrt.jar
   if [ $? -ne 0 ]; then
       echo "ERROR - failed copying jfxrt.jar from ${PROTEGE_HOME}/Contents/Plugins/JRE/Contents/Home/jre/lib/ext/"
       exit 1

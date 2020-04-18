@@ -7,12 +7,84 @@
         PROTEGE_HOME to point to a protege distribution and type ant
         install or jar.
      -->
+    <condition property="isMac">
+        <os family="mac" />
+    </condition>
 
-   <property environment="env"/>
-   <property name = "protege.home"      location="${env.PROTEGE_HOME}"/>
-   <property name = "protege.osgi"      location="${protege.home}/bin/org.apache.felix.main.jar"/>
-   <property file="${protege.home}/build.properties"/>
-   <property file="local.properties"/>
+    <condition property="notMac">
+        <not>
+            <os family="mac" />
+        </not>
+    </condition>
+
+    <property environment="env"/>
+
+<!--    protege has a different file structure on MacOS, so this target sets properties considering that. -->
+    <target name="doMac" if="isMac">
+        <echo message="Running doMac target" />
+        <property name = "protege.home"      location="${env.PROTEGE_HOME}/Protégé.app/Contents/Java"/>
+        <property name = "protege.osgi"      location="${protege.home}/bin/org.apache.felix.main.jar"/>
+        <property file="${protege.home}/build.properties"/>
+        <property file="local.properties"/>
+
+        <property name = "protege.common"    location="${protege.home}/bundles"/>
+        <property name = "protege.plugins"   location="${protege.home}/plugins"/>
+        <property name = "run.config"        location="${protege.home}/conf/config.xml"/>
+
+        <property name="guava"
+                  location="${protege.common}/guava.jar"/>
+        <property name="equinox.common"
+                  location="${protege.common}/org.eclipse.equinox.common.jar"/>
+        <property name="equinox.registry"
+                  location="${protege.common}/org.eclipse.equinox.registry.jar"/>
+        <property name="protege.lib"
+                  location="${protege.common}/protege-editor-core.jar"/>
+        <property name="common.lib"
+                  location="${protege.common}/protege-common.jar"/>
+
+        <property name="owl.lib"
+                  location="${protege.common}/owlapi-osgidistribution.jar"/>
+
+        <property name="owl.editor.jar"
+                  location="${protege.common}/protege-editor-owl.jar"/>
+
+        <property name="org.osgi.framework.system.packages.extra"
+                  value="javafx.application"/>
+    </target>
+
+<!--    this is the original stuff -->
+    <target name="doNotMac" if="notMac">
+        <echo message="Running notMac target" />
+        <property name = "protege.home"      location="${env.PROTEGE_HOME}"/>
+        <property name = "protege.osgi"      location="${protege.home}/bin/org.apache.felix.main.jar"/>
+        <property file="${protege.home}/build.properties"/>
+        <property file="local.properties"/>
+
+        <property name = "protege.common"    location="${protege.home}/bundles"/>
+        <property name = "protege.plugins"   location="${protege.home}/plugins"/>
+        <property name = "run.config"        location="${protege.home}/config.xml"/>
+
+        <property name="guava"
+                  location="${protege.common}/guava.jar"/>
+        <property name="equinox.common"
+                  location="${protege.common}/org.eclipse.equinox.common.jar"/>
+        <property name="equinox.registry"
+                  location="${protege.common}/org.eclipse.equinox.registry.jar"/>
+        <property name="protege.lib"
+                  location="${protege.common}/protege-editor-core.jar"/>
+        <property name="common.lib"
+                  location="${protege.common}/protege-common.jar"/>
+
+        <property name="owl.lib"
+                  location="${protege.common}/owlapi-osgidistribution.jar"/>
+
+        <property name="owl.editor.jar"
+                  location="${protege.common}/protege-editor-owl.jar"/>
+
+        <property name="org.osgi.framework.system.packages.extra"
+                  value="javafx.application"/>
+    </target>
+
    <property name = "bundlor.home"      location="${env.BUNDLOR_HOME}"/>
 
    <property file="version.properties"/>
@@ -28,7 +100,6 @@
         change.
      -->
    <property name = "plugin"          value = "csvtordf"/>
-
    
    <!-- 
         these properties probably don't need changing
@@ -41,33 +112,8 @@
    <property name = "manifest"          location = "${build}/manifest.mf"/>
    <property name = "manifest.bundlor"  location = "./META-INF/manifest.bundlor"/>
 
-   <property name = "protege.common"    location="${protege.home}/bundles"/>
-   <property name = "protege.plugins"   location="${protege.home}/plugins"/>
-   <property name = "run.config"        location="${protege.home}/config.xml"/>
 
-   <property name="guava"
-             location="${protege.common}/guava.jar"/>
-   <property name="equinox.common" 
-             location="${protege.common}/org.eclipse.equinox.common.jar"/>
-   <property name="equinox.registry"
-             location="${protege.common}/org.eclipse.equinox.registry.jar"/>
-   <property name="protege.lib" 
-             location="${protege.common}/protege-editor-core.jar"/>
-   <property name="common.lib"
-             location="${protege.common}/protege-common.jar"/>
-
-   <property name="owl.lib"
-             location="${protege.common}/owlapi-osgidistribution.jar"/>
-
-   <property name="owl.editor.jar"
-	     location="${protege.common}/protege-editor-owl.jar"/>
-
-   <property name="org.osgi.framework.system.packages.extra" 
-             value="javafx.application"/>
-
-
-
-   <target name = "init">
+   <target name = "init" depends="doMac, doNotMac">
      <tstamp>
        <format property="build.time" pattern="yyyy_MM_dd_hhmm"/>
      </tstamp>
