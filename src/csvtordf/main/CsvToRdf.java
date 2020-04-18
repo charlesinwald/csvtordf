@@ -229,6 +229,9 @@ public class CsvToRdf extends Object {
     model.setNsPrefix("csv", prefix);
     //Iterate through headers, creating them as properties to model
     for (String header : headers) {
+      // TODO: check for valid XML element name syntax
+      // It appears Jena will escape invalid characters in literals, but certain malicious headers currently crash
+      // the plugin
       Property property = model.createProperty(prefix, header);
       properties.add(property);
     }
