@@ -18,6 +18,7 @@ import java.util.List;
 
 // Java GUI
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
@@ -59,7 +60,7 @@ public class CsvWizard extends Application {
     private VBox centerPane;
     private Button saveButton;
     public static OWLModelManager modelManager;
-    private boolean runAsPlugin = false;
+    public boolean runAsPlugin = false;
     private String selectedFileName;
 
     /**
@@ -71,11 +72,15 @@ public class CsvWizard extends Application {
     @Override
     public void start(Stage stage) {
         // Set if called as a plugin for Protege
-        Parameters params = getParameters();
-        List<String> list = params.getRaw();
-        if (list.size() > 0 && list.get(0).equals("plugin")) {
-          runAsPlugin = true;
+        if (!runAsPlugin) {
+          Parameters params = getParameters();
+          List<String> list = params.getRaw();
+          if (list.size() > 0 && list.get(0).equals("plugin")) {
+            runAsPlugin = true;
+	    Platform.setImplicitExit(false);
+	  }
 	}
+
 
         // Setup scene
         BorderPane border = new BorderPane();
