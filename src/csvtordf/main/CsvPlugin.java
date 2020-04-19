@@ -45,8 +45,6 @@ public class CsvPlugin extends ProtegeOWLAction {
   public void actionPerformed(ActionEvent event) {
     String[] args = {"plugin"};
     CsvWizard.modelManager = getOWLModelManager();
-    // FIXME: This can only be called once. Attempting
-    //        to run the plugin twice will crash.
     if (!launched) {
       LaunchApp launcher = new LaunchApp();
       Thread t = new Thread(launcher);
