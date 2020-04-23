@@ -59,6 +59,8 @@ public class CsvWizard extends Application {
     private Boolean modelLoaded = false;
     private VBox centerPane;
     private Button saveButton;
+    private Label execTimeLabel;
+    private ScrollPane scrollPane = new ScrollPane();
     public static OWLModelManager modelManager;
     public boolean runAsPlugin = false;
     private String selectedFileName;
@@ -136,11 +138,13 @@ public class CsvWizard extends Application {
             @Override
             public void handle(ActionEvent e) {
                 CsvToRdf.prefix = prefixField.getText();
-                //TODO UI elements for schema
+                //TODO: UI elements for schema
+		//TODO: Verify conversion was successful
                 CsvToRdf.readInputFile(selectedFilePath, false, "", numberOfThreads);
                 modelLoaded = true;
                 saveButton.setVisible(true);
-                // TODO: Show conversion time
+		execTimeLabel.setText("Execution Time: " + CsvToRdf.getLastExecTime() + " ms");
+		execTimeLabel.setVisible(true);
                 viewModel();
 
             }
@@ -211,6 +215,10 @@ public class CsvWizard extends Application {
         });
         leftPane.getChildren().add(multithreadingSlider);
 
+        execTimeLabel = new Label("Execution Time: N/A");
+        execTimeLabel.setVisible(false);
+        leftPane.getChildren().add(execTimeLabel);
+
         saveButton = new Button("Save RDF");
         saveButton.setVisible(false);
         saveButton.setId("save-button");
@@ -244,6 +252,8 @@ public class CsvWizard extends Application {
         centerPane.setSpacing(16);
         centerPane.setId("center-pane");
 
+        scrollPane.setVisible(false);
+        centerPane.getChildren().add(scrollPane);
 
         return centerPane;
     }
@@ -256,7 +266,7 @@ public class CsvWizard extends Application {
 
             Label rdfText = new Label(byteArrayOutputStream.toString());
             rdfText.setId("rdf-text");
-            ScrollPane scrollPane = new ScrollPane();
+
             // Set content for ScrollPane
             scrollPane.setContent(rdfText);
 
@@ -266,7 +276,7 @@ public class CsvWizard extends Application {
             // Horizontal scroll bar is only displayed when needed
             scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
 
-            centerPane.getChildren().add(scrollPane);
+            scrollPane.setVisible(true);
         }
     }
 }

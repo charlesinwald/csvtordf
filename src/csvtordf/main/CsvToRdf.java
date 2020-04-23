@@ -30,6 +30,12 @@ import org.apache.jena.shared.*;
 // CLI parsing
 import org.apache.commons.cli.*;
 
+
+// TBD: How to handle multiple CSV input files?
+//      Converge all into one model?
+//      For now only support one at a time.
+
+
 class MultiThreadCsvProcessor implements Runnable {
   private final String line;
   private final int num;
@@ -62,8 +68,9 @@ class MultiThreadCsvProcessor implements Runnable {
 
 public class CsvToRdf extends Object {
 
-  // debug verbosity level
+  // debug
   public static int g_verbosity = 0;
+  private static long lastExecTime;
 
   // Jena model definitions
   public static Model model;
@@ -185,8 +192,8 @@ public class CsvToRdf extends Object {
 
       // stop timer and log
       long endTime = System.nanoTime();
-      long timeElapsed = endTime - startTime; // nanoseconds
-      System.out.println("  Processed CSV file in " + timeElapsed/1000000 + " ms");
+      lastExecTime = (endTime - startTime) / 1000000; // milliseconds
+      System.out.println("  Processed CSV file in " + lastExecTime + " ms");
 
     } catch (FileNotFoundException e) {
       System.err.println("File not found: " + inputFilePath);
@@ -295,6 +302,11 @@ public class CsvToRdf extends Object {
     }
   }
 
-
+  /**
+   *
+   * Return long - execution time of most recent conversion in ms
+   *
+   */
+  public static long getLastExecTime() { return lastExecTime; }
 
 }
