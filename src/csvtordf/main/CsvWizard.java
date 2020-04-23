@@ -26,6 +26,7 @@ import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Alert.*;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -139,14 +140,18 @@ public class CsvWizard extends Application {
             public void handle(ActionEvent e) {
                 CsvToRdf.prefix = prefixField.getText();
                 //TODO: UI elements for schema
-		//TODO: Verify conversion was successful
-                CsvToRdf.readInputFile(selectedFilePath, false, "", numberOfThreads);
-                modelLoaded = true;
-                saveButton.setVisible(true);
-		execTimeLabel.setText("Execution Time: " + CsvToRdf.getLastExecTime() + " ms");
-		execTimeLabel.setVisible(true);
-                viewModel();
-
+                modelLoaded = CsvToRdf.readInputFile(selectedFilePath, false, "", numberOfThreads);
+                if (modelLoaded) {
+                  saveButton.setVisible(true);
+		  execTimeLabel.setText("Execution Time: " + CsvToRdf.getLastExecTime() + " ms");
+		  execTimeLabel.setVisible(true);
+                  viewModel();
+                } else {
+                  Alert errorAlert = new Alert(AlertType.ERROR);
+		  errorAlert.setHeaderText("CSV conversion error");
+		  errorAlert.setContentText(CsvToRdf.getLastErrorMsg());
+		  errorAlert.showAndWait();
+                }
             }
         });
         submit.setVisible(false);

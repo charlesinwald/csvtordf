@@ -71,6 +71,7 @@ public class CsvToRdf extends Object {
   // debug
   public static int g_verbosity = 0;
   private static long lastExecTime;
+  private static String lastErrorMsg;
 
   // Jena model definitions
   public static Model model;
@@ -138,7 +139,9 @@ public class CsvToRdf extends Object {
 
     // Will load Jena Model
     System.out.println("Reading in CSV file...");
-    readInputFile(csvfile, interactive, schema, threads);
+    if (!readInputFile(csvfile, interactive, schema, threads)) {
+      System.exit(1);
+    }
 
     // Will output RDF file (or stdout)
     System.out.println("Writing RDF XML to " + output + "...");
@@ -156,8 +159,9 @@ public class CsvToRdf extends Object {
    * @param schemaFilePath - path to RDF XML Schema file to augment CSV data
    * @param threads - number of threads for multithreaded parsing
    *
+   * return boolean - true if successful, false otherwise.
    */
-  public static void readInputFile(String inputFilePath, boolean interactive, String schemaFilePath, int threads) {
+  public static boolean readInputFile(String inputFilePath, boolean interactive, String schemaFilePath, int threads) {
     try {
       //Construct buffered reader from supplied command line argument of file path
       FileInputStream fIn = new FileInputStream(inputFilePath);
@@ -196,20 +200,21 @@ public class CsvToRdf extends Object {
       System.out.println("  Processed CSV file in " + lastExecTime + " ms");
 
     } catch (FileNotFoundException e) {
-      System.err.println("File not found: " + inputFilePath);
-      System.exit(1);
+      lastErrorMsg = "File not found: " + inputFilePath;
+      System.err.println(lastErrorMsg);
+      return false;
     } catch (IOException e) {
-      System.err.println("Error parsing file headers");
-      System.err.println(e.getMessage());
-      System.exit(1);
+      lastErrorMsg = e.getMessage();
+      System.err.println(lastErrorMsg);
+      return false;
     } catch (InterruptedException e) {
-      System.err.println("Error waiting for all threads to terminate");
-      System.err.println(e.getMessage());
-      System.exit(1);
+      lastErrorMsg = e.getMessage();
+      System.err.println(lastErrorMsg);
+      return false;
     }
 
     if (g_verbosity >= 3) printModel();
-
+    return true;
   }
 
   /**
@@ -302,11 +307,7 @@ public class CsvToRdf extends Object {
     }
   }
 
-  /**
-   *
-   * Return long - execution time of most recent conversion in ms
-   *
-   */
+  /* Basic getters and setters */
   public static long getLastExecTime() { return lastExecTime; }
-
+  public static String getLastErrorMsg() { return lastErrorMsg; }
 }
