@@ -235,7 +235,7 @@
           Remove the copy operation below if you don't have a lib directory.
        -->
      <copy todir="${classes}/lib">
-       <fileset dir="${lib}" excludes="junit*.jar"/>
+	     <fileset dir="${lib}"/> <!-- excludes="junit*.jar"/> -->
      </copy>
      <copy todir="${classes}">
        <fileset dir="." includes="*.xml">
@@ -353,6 +353,22 @@
             </classpath>
         </java>
     </target>
+
+    <target name="jtest">
+        <junitlauncher>
+            <classpath>
+		    <!-- the test classes themselves -->
+		    <pathelement path="${classes}/lib/junit/*"/>
+		    <pathelement path="${classes}/csvtordf/test/*"/>
+		    <pathelement path="${classes}/csvtordf/main/*"/>
+            </classpath>
+	    <testclasses outputdir=".">
+		    <fileset dir="${classes}/csvtordf/test/"/>
+                <listener type="legacy-brief" sendSysOut="true"/>
+                <listener type="legacy-xml" sendSysErr="true" sendSysOut="true"/>
+            </testclasses>
+        </junitlauncher>
+</target>
 
     <!-- ===================================================================  -->
     <!-- DEBUG -->

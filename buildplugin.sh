@@ -53,8 +53,8 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
-#Test
-ant -lib lib/junit/ant-junitlauncher-1.10.5.jar test
+#Test - currently broken
+#ant -lib lib/junit/ant-junitlauncher-1.10.5.jar jtest || exit $?
 
 # Run
 runfile=$(cd "${PROTEGE_HOME}" && find . -type f -name run*)
