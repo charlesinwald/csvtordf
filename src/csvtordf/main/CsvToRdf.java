@@ -78,6 +78,7 @@ public class CsvToRdf extends Object {
   public static ArrayList<Property> properties = new ArrayList<>();
   public static String prefix = "http://example.org/csv#";
 
+  private static boolean initialized = false;
 
   static {
     org.apache.jena.atlas.logging.LogCtl.setCmdLogging();
@@ -92,7 +93,7 @@ public class CsvToRdf extends Object {
     options.addOption(new Option("o", "output", true, "Output RDF XML file (default: STDOUT)"));
     options.addOption(new Option("t", "threads", true, "Number of threads (default: 1)"));
     options.addOption(new Option("i", "interactive", false, "Interactively set RDF attributes"));
-    options.addOption(new Option("s", "schema", true, "XML Schema to use as offset data"));
+    //options.addOption(new Option("s", "schema", true, "XML Schema to use as offset data"));
     options.addOption(new Option("v", "verbosity", true, "Verbose logging level"));
     HelpFormatter formatter = new HelpFormatter();
 
@@ -131,7 +132,7 @@ public class CsvToRdf extends Object {
     System.out.println("CSV-To-RDF");
     System.out.println("  Verbosity   : " + g_verbosity);
     System.out.println("  Interactive : " + interactive);
-    System.out.println("  Schema      : " + schema);
+    //System.out.println("  Schema      : " + schema);
     System.out.println("  Threads     : " + threads);
     System.out.println("  CSV File    : " + csvfile);
     System.out.println("  Output File : " + output);
@@ -139,7 +140,7 @@ public class CsvToRdf extends Object {
 
     // Will load Jena Model
     System.out.println("Reading in CSV file...");
-    if (!readInputFile(csvfile, interactive, schema, threads)) {
+    if (!readInputFile(csvfile, threads)) {
       System.exit(1);
     }
 
@@ -155,13 +156,11 @@ public class CsvToRdf extends Object {
    * Read in a CSV input file, breaking it down into strings
    *
    * @param inputFilePath - path to CSV input file relative to working directory
-   * @param interactive - set whether to run interactively
-   * @param schemaFilePath - path to RDF XML Schema file to augment CSV data
    * @param threads - number of threads for multithreaded parsing
    *
    * return boolean - true if successful, false otherwise.
    */
-  public static boolean readInputFile(String inputFilePath, boolean interactive, String schemaFilePath, int threads) {
+  public static boolean readInputFile(String inputFilePath, int threads) {
     try {
       //Construct buffered reader from supplied command line argument of file path
       FileInputStream fIn = new FileInputStream(inputFilePath);
@@ -169,11 +168,12 @@ public class CsvToRdf extends Object {
 
       // Get header line (first line)
       String line = br.readLine(); // reads the first line, or nothing
-      //Split header line into properties
-      String[] tokens = line.split(",");
-      // initialize model with properties
-      if (g_verbosity >= 1) System.out.println("  Initializing model with " + tokens.length + " properties: " + Arrays.toString(tokens));
-      initModel(tokens, interactive, schemaFilePath);
+      if (!initialized) {
+        //Split header line into properties
+        String[] tokens = line.split(",");
+        // initialize model with properties
+        initModel(tokens);
+      }
 
       // Start timer
       long startTime = System.nanoTime();
@@ -221,24 +221,14 @@ public class CsvToRdf extends Object {
    * Create a model and create properties from CSV headers
    *
    * @param headers - first line of CSV file, split on commas
-   * @param interactive - set whether to run interactively
-   * @param schemaFilePath - path to schema XML relative to working directory
    *
    */
-  public static void initModel(String[] headers, boolean interactive, String schemaFilePath) {
+  public static void initModel(String[] headers) {
     //create an empty model
+    if (g_verbosity >= 1) System.out.println("  Initializing model with " + headers.length + " properties: " + Arrays.toString(headers));
     model = ModelFactory.createDefaultModel();
-
-    if (!schemaFilePath.equals("")) {
-        // TODO: Read in schema file
-    }
-    if (interactive) {
-        // TODO: Run wizard to create schema
-        // TBD: How to handle if both schema and interactive provided?
-        Application.launch(CsvWizard.class, headers);
-    }
-
     model.setNsPrefix("csv", prefix);
+
     //Iterate through headers, creating them as properties to model
     for (String header : headers) {
       // TODO: check for valid XML element name syntax
@@ -248,6 +238,7 @@ public class CsvToRdf extends Object {
       properties.add(property);
     }
 
+    initialized = true;
   }
 
   /**

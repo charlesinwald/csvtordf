@@ -15,6 +15,8 @@ package csvtordf.main;
 
 import java.io.*;
 import java.util.List;
+import java.util.Arrays;
+import java.util.Optional;
 
 // Java GUI
 import javafx.application.Application;
@@ -27,6 +29,7 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.*;
+import javafx.scene.control.ButtonType.*;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -140,7 +143,23 @@ public class CsvWizard extends Application {
             public void handle(ActionEvent e) {
                 CsvToRdf.prefix = prefixField.getText();
                 //TODO: UI elements for schema
-                modelLoaded = CsvToRdf.readInputFile(selectedFilePath, false, "", numberOfThreads);
+	        Alert askForHelp = new Alert(AlertType.CONFIRMATION,
+				             "Would you like to launch setup helper?",
+					     ButtonType.YES, ButtonType.NO);
+	        askForHelp.setTitle("Ready To Convert");
+		Optional<ButtonType> result = askForHelp.showAndWait();
+		boolean setupFailed = false;
+		if (result.get() == ButtonType.YES) {
+		  if (!setupModelProperties()) {
+                    setupFailed = true;
+		    modelLoaded = false;
+                  }
+		} else {
+		  // Do nothing
+		}
+		if (!setupFailed) {
+                  modelLoaded = CsvToRdf.readInputFile(selectedFilePath, numberOfThreads);
+		}
                 if (modelLoaded) {
                   saveButton.setVisible(true);
 		  execTimeLabel.setText("Execution Time: " + CsvToRdf.getLastExecTime() + " ms");
@@ -233,7 +252,8 @@ public class CsvWizard extends Application {
                 FileChooser fileChooser = new FileChooser();
                 fileChooser.setTitle("Save " + selectedFileName + " as RDF");
                 //Specify we are saving RDF files here
-                FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("RDF files (*.rdf)", "*.rdf");
+		List<String> supportedExts = Arrays.asList("*.rdf", "*.xml", "*.owl");
+                FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("RDF files (*.rdf, *.xml, *.owl)", supportedExts);
                 fileChooser.getExtensionFilters().add(extFilter);
                 //Default name for file is the input file's name
                 fileChooser.setInitialFileName(selectedFileName + ".rdf");
@@ -283,6 +303,65 @@ public class CsvWizard extends Application {
 
             scrollPane.setVisible(true);
         }
+    }
+
+    private boolean setupModelProperties() {
+      System.out.println("SETTING UP MODEL");
+      Stage setupStage = new Stage();
+      setupStage.setTitle("Setting Up RDF Model");
+      BorderPane border = new BorderPane();
+      Scene setupScene = new Scene(border, 1024, 768);
+      setupStage.setScene(setupScene);
+      setupStage.getIcons().add(
+                new Image(
+                        CsvWizard.class.getResourceAsStream("icon.png")));
+
+      // Initialize model with header line from file
+      try {
+        FileInputStream fIn = new FileInputStream(selectedFilePath);
+        BufferedReader br = new BufferedReader(new InputStreamReader(fIn));
+        String line = br.readLine(); // reads the first line, or nothing
+        String[] tokens = line.split(",");
+        CsvToRdf.initModel(tokens);
+      } catch (FileNotFoundException e) {
+	Alert errorAlert = new Alert(AlertType.ERROR);
+        errorAlert.setHeaderText("CSV conversion error");
+        errorAlert.setContentText("No such file: " + selectedFilePath);
+        errorAlert.showAndWait();
+        return false;
+      } catch (IOException e) {
+        Alert errorAlert = new Alert(AlertType.ERROR);
+	errorAlert.setHeaderText("CSV Conversion error");
+	errorAlert.setContentText("Failed reading file: " + selectedFilePath);
+	errorAlert.showAndWait();
+	return false;
+      }
+
+      // TODO: Set up rest of stage for augmenting data
+      // Setup options should include...
+      // RDF Type for each entry-
+      //    When run standalone, will create new resource for this type
+      //    When run through Protege, select from existing Ontology classes?
+      // Option to skip header
+      //    Perhaps there is a column that doesn't matter to the user, allow
+      //    option to not include it. The property will already have been
+      //    imported into CsvToRdf.model at this point though, will need to
+      //    somehow back it out.
+      // Data vs Object Property for each header
+      // If Data Property -
+      //    Prompt for type (string/int/date etc...)
+      // If Object Property -
+      //    Create as a new Resource
+      //      prompt for an RDF:type of that resource. Should also as the user
+      //      if they want to always create it, or reuse previously created.
+      //      i.e. if the property is "Country", and multiple rows contain
+      //      "France", it should be smart enough to reuse that same country.
+      //    Use previous row as Resource
+      //      This would require a lot of thought though to make it robust,
+      //      so this is lower priority stretch goal.
+      setupStage.showAndWait();
+      System.out.println("FINISHED SETTING UP MODEL");
+      return true;
     }
 }
 
