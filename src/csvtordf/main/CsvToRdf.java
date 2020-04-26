@@ -37,28 +37,37 @@ import org.apache.commons.cli.*;
 
 
 class MultiThreadCsvProcessor implements Runnable {
-  private final String line;
-  private final int num;
+  private final String[] lines;
+  private final int startNum, endNum;
 
-  public MultiThreadCsvProcessor(String line, int num) {
-    this.line = line;
-    this.num = num;
+  public MultiThreadCsvProcessor(String[] lines, int startNum, int endNum) {
+    this.lines = lines;
+    this.startNum = startNum;
+    this.endNum = endNum;
   }
 
   @Override
   public void run() {
-    // split on regex to handle commas existing within quotes for a field
-    String[] tokens = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
-    if (CsvToRdf.g_verbosity >= 2) System.out.println("    Res " + num + ": " + Arrays.toString(tokens));
-    //The row is the subject
-    // TBD: Write locks are expensive
+    int arrayLength = lines.length;
+    // Do as much parsing outside the critical section as possible
+    String[][] tokens = new String[arrayLength][];
+    for (int i = startNum; i <= endNum; i++) {
+      tokens[i % arrayLength] = lines[i % arrayLength].split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+    }
+
+    // Acquire lock once for entire batch
     CsvToRdf.model.enterCriticalSection(Lock.WRITE);
     try {
-      Resource instance = CsvToRdf.model.createResource(CsvToRdf.prefix + "res" + num);
-      for (int i = 0; i < tokens.length; i++) {
-        //ith property is the predicate
-        //cell is the object
-        instance.addProperty(CsvToRdf.properties.get(i), tokens[i]);
+      for (int i = startNum; i <= endNum; i++) {
+        if (CsvToRdf.g_verbosity >= 2) System.out.println("    Res " + i + ": " + Arrays.toString(tokens[i % arrayLength]));
+        //The row is the subject
+        // TBD: Write locks are expensive
+        Resource instance = CsvToRdf.model.createResource(CsvToRdf.prefix + "res" + i);
+        for (int j = 0; j < tokens[i % arrayLength].length; j++) {
+          //jth property is the predicate
+          //cell is the object
+          instance.addProperty(CsvToRdf.properties.get(j), tokens[i % arrayLength][j]);
+        }
       }
     } finally {
       CsvToRdf.model.leaveCriticalSection();
@@ -78,6 +87,7 @@ public class CsvToRdf extends Object {
   public static ArrayList<Property> properties = new ArrayList<>();
   public static String prefix = "http://example.org/csv#";
 
+  // Set once model is loaded the first time
   private static boolean initialized = false;
 
   static {
@@ -182,12 +192,22 @@ public class CsvToRdf extends Object {
       ExecutorService service = Executors.newFixedThreadPool(threads);
 
       // Pass off line to thread in pool
-      // TODO: Probably better to group into say 100 lines at a time
+      // TODO: Play around with the batch size/make it configurable?
+      int batchSize = 100;
       int num = 0;
+      String[] linesArray = new String[batchSize];
       while ((line = br.readLine()) != null) {
-        service.execute(new MultiThreadCsvProcessor(line, num));
-        num++;
+        linesArray[num % batchSize] = line;
+	num++;
+	if (num % batchSize == 0) {
+	  service.execute(new MultiThreadCsvProcessor(linesArray, num - batchSize, num - 1));
+	}
       }
+      // Launch any remaining
+      if (num % batchSize != 0) {
+        service.execute(new MultiThreadCsvProcessor(linesArray, (num / batchSize) * batchSize, num - 1));
+      }
+
       // Wait for completion
       service.shutdown();
       service.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
