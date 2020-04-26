@@ -35,10 +35,15 @@ elif [[ "${PATH}" != *"ant"* ]]; then
 fi
 
 # WORKAROUND - get version of jfxrt bundled with Protege JRE
-rm -f lib/jfxrt.jar && cp "${PROTEGE_HOME}/jre/lib/ext/jfxrt.jar" lib/jfxrt.jar
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  jfxPath="${PROTEGE_HOME}/Protégé.app/Contents/Plugins/JRE/Contents/Home/jre/lib/ext/jfxrt.jar"
+else
+  jfxPath="${PROTEGE_HOME}/jre/lib/ext/jfxrt.jar"
+fi
+rm -f lib/jfxrt.jar && cp "${jfxPath}" lib/jfxrt.jar
 if [ $? -ne 0 ]; then
-    echo "ERROR - failed copying jfxrt.jar from ${PROTEGE_HOME}/jre/lib/ext/"
-    exit 1
+  echo "ERROR - failed copying jfxrt.jar from ${jfxPath}"
+  exit 1
 fi
 
 # ant build
@@ -48,10 +53,8 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
-
 #Test
 ant -lib lib/junit/ant-junitlauncher-1.10.5.jar test
-
 
 # Run
 runfile=$(cd "${PROTEGE_HOME}" && find . -type f -name run*)
