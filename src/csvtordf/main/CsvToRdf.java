@@ -38,9 +38,16 @@ import org.apache.commons.cli.*;
 
 class MultiThreadCsvProcessor implements Runnable {
   private final String[] lines;
+  private final String prefix;
   private final int startNum, endNum;
+  private Model model;
+  private final ArrayList<Property> properties;
 
-  public MultiThreadCsvProcessor(String[] lines, int startNum, int endNum) {
+  public MultiThreadCsvProcessor(Model model, String prefix, ArrayList<Property> properties,
+		                 String[] lines, int startNum, int endNum) {
+    this.model = model;
+    this.prefix = prefix;
+    this.properties = properties;
     this.lines = lines;
     this.startNum = startNum;
     this.endNum = endNum;
@@ -55,22 +62,22 @@ class MultiThreadCsvProcessor implements Runnable {
       tokens[i % arrayLength] = lines[i % arrayLength].split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
     }
 
-    // Acquire lock once for entire batch
-    CsvToRdf.model.enterCriticalSection(Lock.WRITE);
+    // Locks are expensive, but tested with having each thread maintain its own model and merge at the end,
+    // and performance was the same or worse. Batching/locking had the best results.
+    model.enterCriticalSection(Lock.WRITE);
     try {
       for (int i = startNum; i <= endNum; i++) {
         if (CsvToRdf.g_verbosity >= 2) System.out.println("    Res " + i + ": " + Arrays.toString(tokens[i % arrayLength]));
         //The row is the subject
-        // TBD: Write locks are expensive
-        Resource instance = CsvToRdf.model.createResource(CsvToRdf.prefix + "res" + i);
+        Resource instance = model.createResource(prefix + "res" + i);
         for (int j = 0; j < tokens[i % arrayLength].length; j++) {
           //jth property is the predicate
           //cell is the object
-          instance.addProperty(CsvToRdf.properties.get(j), tokens[i % arrayLength][j]);
+          instance.addProperty(properties.get(j), tokens[i % arrayLength][j]);
         }
       }
     } finally {
-      CsvToRdf.model.leaveCriticalSection();
+      model.leaveCriticalSection();
     }
   }
 }
@@ -79,16 +86,16 @@ public class CsvToRdf extends Object {
 
   // debug
   public static int g_verbosity = 0;
-  private static long lastExecTime;
-  private static String lastErrorMsg;
+  private long lastExecTime;
+  private String lastErrorMsg;
 
   // Jena model definitions
-  public static Model model;
-  public static ArrayList<Property> properties = new ArrayList<>();
-  public static String prefix = "http://example.org/csv#";
+  private Model model;
+  private ArrayList<Property> properties = new ArrayList<>();
+  private String prefix = "http://example.org/csv#";
 
   // Set once model is loaded the first time
-  private static boolean initialized = false;
+  private boolean initialized = false;
 
   static {
     org.apache.jena.atlas.logging.LogCtl.setCmdLogging();
@@ -150,13 +157,14 @@ public class CsvToRdf extends Object {
 
     // Will load Jena Model
     System.out.println("Reading in CSV file...");
-    if (!readInputFile(csvfile, threads)) {
+    CsvToRdf csvHandler = new CsvToRdf();
+    if (!csvHandler.readInputFile(csvfile, threads)) {
       System.exit(1);
     }
 
     // Will output RDF file (or stdout)
     System.out.println("Writing RDF XML to " + output + "...");
-    outputModel(output);
+    csvHandler.outputModel(output);
 
     System.out.println("");
     System.out.println("Done!");
@@ -170,7 +178,7 @@ public class CsvToRdf extends Object {
    *
    * return boolean - true if successful, false otherwise.
    */
-  public static boolean readInputFile(String inputFilePath, int threads) {
+  public boolean readInputFile(String inputFilePath, int threads) {
     try {
       //Construct buffered reader from supplied command line argument of file path
       FileInputStream fIn = new FileInputStream(inputFilePath);
@@ -200,12 +208,14 @@ public class CsvToRdf extends Object {
         linesArray[num % batchSize] = line;
 	num++;
 	if (num % batchSize == 0) {
-	  service.execute(new MultiThreadCsvProcessor(linesArray, num - batchSize, num - 1));
+	  service.execute(new MultiThreadCsvProcessor(model, prefix, properties,
+				                      linesArray, num - batchSize, num - 1));
 	}
       }
       // Launch any remaining
       if (num % batchSize != 0) {
-        service.execute(new MultiThreadCsvProcessor(linesArray, (num / batchSize) * batchSize, num - 1));
+        service.execute(new MultiThreadCsvProcessor(model, prefix, properties,
+				                    linesArray, (num / batchSize) * batchSize, num - 1));
       }
 
       // Wait for completion
@@ -248,7 +258,7 @@ public class CsvToRdf extends Object {
    * @param headers - first line of CSV file, split on commas
    *
    */
-  public static void initModel(String[] headers) {
+  public void initModel(String[] headers) {
     //create an empty model
     if (g_verbosity >= 1) System.out.println("  Initializing model with " + headers.length + " properties: " + Arrays.toString(headers));
     model = ModelFactory.createDefaultModel();
@@ -256,10 +266,7 @@ public class CsvToRdf extends Object {
 
     //Iterate through headers, creating them as properties to model
     for (String header : headers) {
-      // TODO: check for valid XML element name syntax
-      // It appears Jena will escape invalid characters in literals, but certain malicious headers currently crash
-      // the plugin
-      Property property = model.createProperty(prefix, header);
+      Property property = model.createProperty(prefix, cleanStr(header));
       properties.add(property);
     }
 
@@ -268,10 +275,30 @@ public class CsvToRdf extends Object {
 
   /**
    *
+   * Clean string for XML/RDF syntax
+   *
+   * @param str - String to be cleaned
+   *
+   * return String - cleaned string
+   *
+   */
+  private String cleanStr(String str) {
+    // TBD: Does this cover all invalid characters?
+    //      Should they be replaced more uniquely than underscore?
+    String fmtStr = str;
+    String replaceString = " &<>";
+    for (int i=0; i < replaceString.length(); i++) {
+      fmtStr = fmtStr.replaceAll(Character.toString(replaceString.charAt(i)), "_");
+    }
+    return fmtStr;
+  }
+
+  /**
+   *
    * Print model for debugging purposes
    *
    */
-  public static void printModel() {
+  public void printModel() {
     // list the statements in the Model
     StmtIterator iter = model.listStatements();
 
@@ -302,7 +329,7 @@ public class CsvToRdf extends Object {
    * @params outFilePath - path to output RDF XML file or STDOUT
    *
    */
-  public static void outputModel(String outFilePath) {
+  public void outputModel(String outFilePath) {
     try {
       if (outFilePath.equals("STDOUT")) {
         System.out.println("");
@@ -329,13 +356,16 @@ public class CsvToRdf extends Object {
    * a new CSV conversion
    *
    */
-  public static void clearModel() {
+  public void clearModel() {
     model = ModelFactory.createDefaultModel();
     properties = new ArrayList<>();
     initialized = false;
   }
 
   /* Basic getters and setters */
-  public static long getLastExecTime() { return lastExecTime; }
-  public static String getLastErrorMsg() { return lastErrorMsg; }
+  public void setPrefix(String p) { prefix = p; }
+  public String getPrefix() { return prefix; }
+  public Model getModel() { return model; }
+  public long getLastExecTime() { return lastExecTime; }
+  public String getLastErrorMsg() { return lastErrorMsg; }
 }

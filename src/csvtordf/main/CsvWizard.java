@@ -68,6 +68,7 @@ public class CsvWizard extends Application {
     public static OWLModelManager modelManager;
     public boolean runAsPlugin = false;
     private String selectedFileName;
+    private CsvToRdf csvHandler = new CsvToRdf();
 
     /**
      * The main entry point of the application, (running on the JavaFX application thread)
@@ -125,7 +126,7 @@ public class CsvWizard extends Application {
         currentFile.setAlignment(Pos.CENTER_RIGHT);
         currentFile.setPadding(new Insets(5, 5, 5, 5));
 
-        TextField prefixField = new TextField(CsvToRdf.prefix);
+        TextField prefixField = new TextField(csvHandler.getPrefix());
         prefixField.setId("prefix-field");
         prefixField.setPrefColumnCount(30);
         if (runAsPlugin) {
@@ -141,8 +142,8 @@ public class CsvWizard extends Application {
         submit.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                CsvToRdf.clearModel(); // clear out any previous
-                CsvToRdf.prefix = prefixField.getText();
+                csvHandler.clearModel(); // clear out any previous
+                csvHandler.setPrefix(prefixField.getText());
                 //TODO: UI elements for schema
 	        Alert askForHelp = new Alert(AlertType.CONFIRMATION,
 				             "Would you like to launch setup helper?",
@@ -159,17 +160,17 @@ public class CsvWizard extends Application {
 		  // Do nothing
 		}
 		if (!setupFailed) {
-                  modelLoaded = CsvToRdf.readInputFile(selectedFilePath, numberOfThreads);
+                  modelLoaded = csvHandler.readInputFile(selectedFilePath, numberOfThreads);
 		}
                 if (modelLoaded) {
                   saveButton.setVisible(true);
-		  execTimeLabel.setText("Execution Time: " + CsvToRdf.getLastExecTime() + " ms");
+		  execTimeLabel.setText("Execution Time: " + csvHandler.getLastExecTime() + " ms");
 		  execTimeLabel.setVisible(true);
                   viewModel();
                 } else {
                   Alert errorAlert = new Alert(AlertType.ERROR);
 		  errorAlert.setHeaderText("CSV conversion error");
-		  errorAlert.setContentText(CsvToRdf.getLastErrorMsg());
+		  errorAlert.setContentText(csvHandler.getLastErrorMsg());
 		  errorAlert.showAndWait();
                 }
             }
@@ -263,7 +264,7 @@ public class CsvWizard extends Application {
                 File file = fileChooser.showSaveDialog(null);
 
                 if (file != null) {
-                    CsvToRdf.outputModel(file.getAbsolutePath());
+                    csvHandler.outputModel(file.getAbsolutePath());
                 }
             }
         });;
@@ -292,7 +293,7 @@ public class CsvWizard extends Application {
         if (modelLoaded) {
             int lineLimit = 500;
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(128);
-            CsvToRdf.model.write(byteArrayOutputStream, "RDF/XML-ABBREV");
+            csvHandler.getModel().write(byteArrayOutputStream, "RDF/XML-ABBREV");
 	    // only output the first few lines if the file is too big
 	    String[] lines = byteArrayOutputStream.toString().split("\n");
 	    String[] linesSubset = Arrays.copyOfRange(lines, 0, lineLimit);
@@ -333,7 +334,7 @@ public class CsvWizard extends Application {
         BufferedReader br = new BufferedReader(new InputStreamReader(fIn));
         String line = br.readLine(); // reads the first line, or nothing
         String[] tokens = line.split(",");
-        CsvToRdf.initModel(tokens);
+        csvHandler.initModel(tokens);
       } catch (FileNotFoundException e) {
 	Alert errorAlert = new Alert(AlertType.ERROR);
         errorAlert.setHeaderText("CSV conversion Error");
