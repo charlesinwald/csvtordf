@@ -231,6 +231,11 @@ public class CsvToRdf extends Object {
       lastErrorMsg = e.getMessage();
       System.err.println(lastErrorMsg);
       return false;
+    } catch (Exception e) {
+      // some unknown error, don't crash
+      lastErrorMsg = e.getMessage();
+      System.err.println(lastErrorMsg);
+      return false;
     }
 
     if (g_verbosity >= 3) printModel();
@@ -316,6 +321,18 @@ public class CsvToRdf extends Object {
       //e.printStackTrace();
       System.exit(1);
     }
+  }
+
+  /**
+   *
+   * Clear Jena Model and properties to prepare for
+   * a new CSV conversion
+   *
+   */
+  public static void clearModel() {
+    model = ModelFactory.createDefaultModel();
+    properties = new ArrayList<>();
+    initialized = false;
   }
 
   /* Basic getters and setters */

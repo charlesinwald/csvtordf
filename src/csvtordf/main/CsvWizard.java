@@ -141,6 +141,7 @@ public class CsvWizard extends Application {
         submit.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
+                CsvToRdf.clearModel(); // clear out any previous
                 CsvToRdf.prefix = prefixField.getText();
                 //TODO: UI elements for schema
 	        Alert askForHelp = new Alert(AlertType.CONFIRMATION,
@@ -277,6 +278,10 @@ public class CsvWizard extends Application {
         centerPane.setSpacing(16);
         centerPane.setId("center-pane");
 
+        Label previewLabel = new Label("Preview:");
+        previewLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+	centerPane.getChildren().add(previewLabel);
+
         scrollPane.setVisible(false);
         centerPane.getChildren().add(scrollPane);
 
@@ -285,11 +290,17 @@ public class CsvWizard extends Application {
 
     public void viewModel() {
         if (modelLoaded) {
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-
+            int lineLimit = 500;
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(128);
             CsvToRdf.model.write(byteArrayOutputStream, "RDF/XML-ABBREV");
-
-            Label rdfText = new Label(byteArrayOutputStream.toString());
+	    // only output the first few lines if the file is too big
+	    String[] lines = byteArrayOutputStream.toString().split("\n");
+	    String[] linesSubset = Arrays.copyOfRange(lines, 0, lineLimit);
+	    String linesJoined = String.join("\n", linesSubset);
+            if (lines.length > lineLimit) {
+              linesJoined += "\n... truncated " + (lines.length - lineLimit) + " lines ...";
+            }
+            Label rdfText = new Label(linesJoined);
             rdfText.setId("rdf-text");
 
             // Set content for ScrollPane
@@ -325,15 +336,20 @@ public class CsvWizard extends Application {
         CsvToRdf.initModel(tokens);
       } catch (FileNotFoundException e) {
 	Alert errorAlert = new Alert(AlertType.ERROR);
-        errorAlert.setHeaderText("CSV conversion error");
+        errorAlert.setHeaderText("CSV conversion Error");
         errorAlert.setContentText("No such file: " + selectedFilePath);
         errorAlert.showAndWait();
         return false;
       } catch (IOException e) {
         Alert errorAlert = new Alert(AlertType.ERROR);
-	errorAlert.setHeaderText("CSV Conversion error");
+	errorAlert.setHeaderText("CSV Conversion Error");
 	errorAlert.setContentText("Failed reading file: " + selectedFilePath);
 	errorAlert.showAndWait();
+	return false;
+      } catch (Exception e) {
+        Alert errorAlert = new Alert(AlertType.ERROR);
+        errorAlert.setHeaderText("CSV Conversion Error");
+	errorAlert.setContentText(e.getMessage());
 	return false;
       }
 
