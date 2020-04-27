@@ -16,6 +16,7 @@ import java.io.*;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Optional;
+import java.lang.Math;
 
 // Java GUI
 import javafx.application.Application;
@@ -310,10 +311,12 @@ public class CsvWizard extends Application {
         if (modelLoaded) {
             int lineLimit = 500;
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(128);
+	    System.err.println("Start writing");
             csvHandler.getModel().write(byteArrayOutputStream, "RDF/XML-ABBREV");
+	    System.err.println("End writing");
 	    // only output the first few lines if the file is too big
 	    String[] lines = byteArrayOutputStream.toString().split("\n");
-	    String[] linesSubset = Arrays.copyOfRange(lines, 0, lineLimit);
+	    String[] linesSubset = Arrays.copyOfRange(lines, 0, Math.min(lines.length, lineLimit));
 	    String linesJoined = String.join("\n", linesSubset);
             if (lines.length > lineLimit) {
               linesJoined += "\n... truncated " + (lines.length - lineLimit) + " lines ...";
