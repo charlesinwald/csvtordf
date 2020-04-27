@@ -31,10 +31,11 @@ import org.apache.jena.shared.*;
 import org.apache.commons.cli.*;
 
 
-// TBD: How to handle multiple CSV input files?
-//      Converge all into one model?
-//      For now only support one at a time.
-
+// TBD: How to handle multiple CSV input files? Converge all into one model?
+//      Current implementation will use the headers of the first file only.
+//      Any future file will either need to have identical headers,
+//      or the model will need to be cleared and the new file
+//      will be its own model.
 
 class MultiThreadCsvProcessor implements Runnable {
   private final String[] lines;
@@ -97,6 +98,10 @@ public class CsvToRdf extends Object {
   // Set once model is loaded the first time
   private boolean initialized = false;
 
+  // How many lines to process at a time per-thread
+  // TBD: Make it configurable?
+  private final BATCH_SIZE = 100;
+
   static {
     org.apache.jena.atlas.logging.LogCtl.setCmdLogging();
   }
@@ -109,25 +114,19 @@ public class CsvToRdf extends Object {
     options.addOption(infile);
     options.addOption(new Option("o", "output", true, "Output RDF XML file (default: STDOUT)"));
     options.addOption(new Option("t", "threads", true, "Number of threads (default: 1)"));
-    options.addOption(new Option("i", "interactive", false, "Interactively set RDF attributes"));
-    //options.addOption(new Option("s", "schema", true, "XML Schema to use as offset data"));
     options.addOption(new Option("v", "verbosity", true, "Verbose logging level"));
     HelpFormatter formatter = new HelpFormatter();
 
     // Parse arguments
-    String schema = "";
     String csvfile = "";
     int threads = 1;
     String output = "STDOUT"; // technically disallows a user creating a file named "STDOUT"
-    boolean interactive = false; // TODO: Save off schema output somewhere
     CommandLineParser parser = new DefaultParser();
     try {
       CommandLine line = parser.parse(options, args);
       if(line.hasOption("v")) g_verbosity = Integer.parseInt(line.getOptionValue("v"));
-      if(line.hasOption("s")) schema = line.getOptionValue("s");
       if(line.hasOption("o")) output = line.getOptionValue("o");
       if(line.hasOption("t")) threads = Integer.parseInt(line.getOptionValue("t"));
-      interactive = line.hasOption("i");
       csvfile = line.getOptionValue("c");
     } catch(NumberFormatException e) {
       System.err.println("Non-Integer Found! " + e.getMessage());
@@ -148,8 +147,6 @@ public class CsvToRdf extends Object {
     // Print application header info
     System.out.println("CSV-To-RDF");
     System.out.println("  Verbosity   : " + g_verbosity);
-    System.out.println("  Interactive : " + interactive);
-    //System.out.println("  Schema      : " + schema);
     System.out.println("  Threads     : " + threads);
     System.out.println("  CSV File    : " + csvfile);
     System.out.println("  Output File : " + output);
@@ -199,23 +196,21 @@ public class CsvToRdf extends Object {
       // Create thread pool
       ExecutorService service = Executors.newFixedThreadPool(threads);
 
-      // Pass off line to thread in pool
-      // TODO: Play around with the batch size/make it configurable?
-      int batchSize = 100;
+      // Pass off batch of lines to thread in pool
       int num = 0;
-      String[] linesArray = new String[batchSize];
+      String[] linesArray = new String[BATCH_SIZE];
       while ((line = br.readLine()) != null) {
-        linesArray[num % batchSize] = line;
+        linesArray[num % BATCH_SIZE] = line;
 	num++;
-	if (num % batchSize == 0) {
+	if (num % BATCH_SIZE == 0) {
 	  service.execute(new MultiThreadCsvProcessor(model, prefix, properties,
-				                      linesArray, num - batchSize, num - 1));
+				                      linesArray, num - BATCH_SIZE, num - 1));
 	}
       }
       // Launch any remaining
-      if (num % batchSize != 0) {
+      if (num % BATCH_SIZE != 0) {
         service.execute(new MultiThreadCsvProcessor(model, prefix, properties,
-				                    linesArray, (num / batchSize) * batchSize, num - 1));
+				                    linesArray, (num / BATCH_SIZE) * BATCH_SIZE, num - 1));
       }
 
       // Wait for completion
@@ -262,7 +257,7 @@ public class CsvToRdf extends Object {
     //create an empty model
     if (g_verbosity >= 1) System.out.println("  Initializing model with " + headers.length + " properties: " + Arrays.toString(headers));
     model = ModelFactory.createDefaultModel();
-    model.setNsPrefix("csv", prefix);
+    model.setNsPrefix("csv", prefix); // use "csv" prefix for any line resource
 
     //Iterate through headers, creating them as properties to model
     for (String header : headers) {
