@@ -37,6 +37,11 @@ import org.apache.commons.cli.*;
 //      or the model will need to be cleared and the new file
 //      will be its own model.
 
+/**
+ *
+ * Execution class for parallel processing of CSV file
+ *
+ */
 class MultiThreadCsvProcessor implements Runnable {
   private final String[] lines;
   private final String prefix;
@@ -83,6 +88,11 @@ class MultiThreadCsvProcessor implements Runnable {
   }
 }
 
+/**
+ *
+ * Class for handling conversion from CSV file to Jena RDF Model
+ *
+ */
 public class CsvToRdf extends Object {
 
   // debug
@@ -100,7 +110,7 @@ public class CsvToRdf extends Object {
 
   // How many lines to process at a time per-thread
   // TBD: Make it configurable?
-  private final BATCH_SIZE = 100;
+  private final int BATCH_SIZE = 100;
 
   static {
     org.apache.jena.atlas.logging.LogCtl.setCmdLogging();

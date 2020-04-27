@@ -12,7 +12,6 @@
 package csvtordf.main;
 
 // Java imports
-
 import java.io.*;
 import java.util.List;
 import java.util.Arrays;
@@ -115,7 +114,13 @@ public class CsvWizard extends Application {
 
     }
 
-    public HBox buildTopBar() {
+    /**
+     *
+     * Build top bar of GUI window, which is used to select the file to import.
+     * This calls CsvToRdf on the button press to handle the conversion.
+     *
+     */
+    private HBox buildTopBar() {
         Label l = new Label("Prefix:");
         l.setId("prefix-label");
         l.setAlignment(Pos.CENTER_RIGHT);
@@ -209,7 +214,13 @@ public class CsvWizard extends Application {
         return hbox;
     }
 
-    public VBox buildLeftPane() {
+    /**
+     *
+     * Build left pane of GUI window, which is used to select the number of threads
+     * and save the RDF generated.
+     *
+     */
+    private VBox buildLeftPane() {
         VBox leftPane = new VBox();
         leftPane.setPadding(new Insets(10));
         leftPane.setSpacing(16);
@@ -219,13 +230,8 @@ public class CsvWizard extends Application {
         leftPaneTitle.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         leftPane.getChildren().add(leftPaneTitle);
 
-//        interactiveCheckBox = new CheckBox("Interactive");
-//        leftPane.getChildren().add(interactiveCheckBox);
-
-
         Label numberOfThreadsLabel = new Label(String.format("Using %d/%d available threads on your machine", DEFAULT_NUMBER_OF_THREADS, processors));
         leftPane.getChildren().add(numberOfThreadsLabel);
-
 
         multithreadingSlider.setBlockIncrement(1);
         multithreadingSlider.setMajorTickUnit(1);
@@ -273,7 +279,13 @@ public class CsvWizard extends Application {
         return leftPane;
     }
 
-    public VBox buildCenterPane() {
+    /**
+     *
+     * Build center pane of GUI window, which is used for displaying a previous of the generated
+     * RDF XML model.
+     *
+     */
+    private VBox buildCenterPane() {
         centerPane = new VBox();
         centerPane.setPadding(new Insets(10));
         centerPane.setSpacing(16);
@@ -289,7 +301,12 @@ public class CsvWizard extends Application {
         return centerPane;
     }
 
-    public void viewModel() {
+    /**
+     *
+     * Display the generated model in the center pane scroll window.
+     *
+     */
+    private void viewModel() {
         if (modelLoaded) {
             int lineLimit = 500;
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(128);
@@ -317,6 +334,12 @@ public class CsvWizard extends Application {
         }
     }
 
+    /**
+     *
+     * Open new window to guide user through setting up special
+     * attributes of the model before importing every row in the CSV file.
+     *
+     */
     private boolean setupModelProperties() {
       System.out.println("SETTING UP MODEL");
       Stage setupStage = new Stage();
