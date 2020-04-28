@@ -13,12 +13,14 @@ package csvtordf.main;
 
 // Java imports
 import java.io.*;
+import java.util.concurrent.*;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Optional;
 import java.lang.Math;
 
 // Java GUI
+import javafx.concurrent.Task;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -27,13 +29,12 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
+import javafx.scene.Group;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.*;
 import javafx.scene.control.ButtonType.*;
 import javafx.scene.image.Image;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
@@ -265,28 +266,7 @@ public class CsvWizard extends Application {
             public void handle(ActionEvent e) {
                 if (runAsPlugin) {
                     // Load into open Ontology in Protege instead of separate file
-                    OWLOntology actOntology = modelManager.getActiveOntology();
-                    OWLOntologyManager ontManager = actOntology.getOWLOntologyManager();
-                    OWLDataFactory owlFactory = ontManager.getOWLDataFactory();
-                    Model model = csvHandler.getModel();
-                    StmtIterator stmtIt = model.listStatements();
-                    System.out.println("Importing CsvToRdf data to Protege...");
-                    while (stmtIt.hasNext()) {
-                            Statement stmt = stmtIt.next();
-                            //System.err.println("Adding statement: <" + stmt.getSubject().toString() + ", " + stmt.getPredicate().toString() + ", " + stmt.getObject().toString() + ">");
-                            // Add subject if not in Ontology
-                            OWLNamedIndividual sub = owlFactory.getOWLNamedIndividual(IRI.create(stmt.getSubject().getURI()));
-                            ontManager.addAxiom(actOntology, owlFactory.getOWLDeclarationAxiom(sub));
-                            // Add predicate if not in Ontology
-                            // FIXME: Handle ObjectProperty
-                            OWLDataProperty pred = owlFactory.getOWLDataProperty(IRI.create(stmt.getPredicate().getURI()));
-                            ontManager.addAxiom(actOntology, owlFactory.getOWLDeclarationAxiom(pred));
-                            // FIXME: Assumes object of triple is literal
-                            // Add triple assertion
-                            // FIXME: Check return status of addAxiom()
-                            ontManager.addAxiom(actOntology, owlFactory.getOWLDataPropertyAssertionAxiom(pred, sub, owlFactory.getOWLLiteral(stmt.getObject().toString())));
-                    }
-                    System.out.println("Successfully Imported!");
+                    saveToOntology();
                 } else {
                     FileChooser fileChooser = new FileChooser();
                     fileChooser.setTitle("Save " + selectedFileName + " as RDF");
@@ -331,6 +311,81 @@ public class CsvWizard extends Application {
         centerPane.getChildren().add(scrollPane);
 
         return centerPane;
+    }
+
+    /**
+     *
+     * Save Jena model to OWL Ontology from Protege
+     *
+     */
+    private void saveToOntology() {
+        // FIXME: Exceptions are thrown during this, even though it appears to complete successfully
+        OWLOntology actOntology = modelManager.getActiveOntology();
+        OWLOntologyManager ontManager = actOntology.getOWLOntologyManager();
+        OWLDataFactory owlFactory = ontManager.getOWLDataFactory();
+        Model model = csvHandler.getModel();
+        StmtIterator stmtIt = model.listStatements();
+        System.out.println("Importing CsvToRdf data to Protege...");
+
+        // Want to show a nice progress bar since this can take a while,
+        // Setup separate Task that will be run
+        final long numStmts = model.size();
+	final long startTime = System.currentTimeMillis();
+        Task<Void> saveOntTask = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                long i = 0;
+                while (stmtIt.hasNext()) {
+                    Statement stmt = stmtIt.next();
+                    // Calculate ETA and update progress bar and message
+                    i++;
+                    long runningTime = System.currentTimeMillis() - startTime;
+                    long remainingTime = (runningTime / i) * (numStmts - i);
+                    String eta = String.format("%02d:%02d:%02d",
+                                               (remainingTime / (1000*60*60)) % 24, // hours
+                                               (remainingTime / (1000 * 60)) % 60,  // minutes
+                                               (remainingTime / 1000) % 60);        // seconds
+                    updateMessage("Processing: " + (int)(100 * (double)i/numStmts) + "% complete\tETA: " + eta);
+                    updateProgress(i, numStmts);
+                    System.err.println("Adding statement (" + i + "/" + numStmts +"): <" + stmt.getSubject().toString() + ", " + stmt.getPredicate().toString() + ", " + stmt.getObject().toString() + ">");
+
+                    // Add subject if not in Ontology
+                    OWLNamedIndividual sub = owlFactory.getOWLNamedIndividual(IRI.create(stmt.getSubject().getURI()));
+                    ontManager.addAxiom(actOntology, owlFactory.getOWLDeclarationAxiom(sub));
+                    // Add predicate if not in Ontology
+                    // FIXME: Handle ObjectProperty
+                    OWLDataProperty pred = owlFactory.getOWLDataProperty(IRI.create(stmt.getPredicate().getURI()));
+                    ontManager.addAxiom(actOntology, owlFactory.getOWLDeclarationAxiom(pred));
+                    // FIXME: Assumes object of triple is literal
+                    // Add triple assertion
+                    // FIXME: Check return status of addAxiom()
+                    ontManager.addAxiom(actOntology, owlFactory.getOWLDataPropertyAssertionAxiom(pred, sub, owlFactory.getOWLLiteral(stmt.getObject().toString())));
+                }
+                System.out.println("Successfully imported!");
+                return null;
+            }
+        };
+        ProgressBar pBar = new ProgressBar();
+        pBar.setPrefSize(300, 24);
+        pBar.progressProperty().bind(saveOntTask.progressProperty());
+        Label progLabel = new Label("Processing: 0%\tETA:");
+        progLabel.textProperty().bind(saveOntTask.messageProperty());
+        VBox layout = new VBox(10);
+        layout.getChildren().setAll(progLabel, pBar);
+        layout.setPadding(new Insets(10));
+        layout.setAlignment(Pos.CENTER);
+        layout.getStylesheets().add(
+            getClass().getResource(
+                "CsvWizard.css"
+            ).toExternalForm()
+        );
+        Stage progStage = new Stage();
+    	progStage.setScene(new Scene(layout));
+        progStage.setAlwaysOnTop(true);
+        saveOntTask.setOnSucceeded(event -> {progStage.close();});
+        progStage.show();
+        Thread t1 = new Thread(saveOntTask);
+        t1.start();
     }
 
     /**
