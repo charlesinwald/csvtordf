@@ -43,12 +43,17 @@ import javafx.stage.Stage;
 import javafx.event.*;
 
 // Jena Imports
+import org.apache.jena.ontology.OntModel;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.*;
+import org.apache.jena.util.iterator.ExtendedIterator;
 
 // Protege Imports
-import org.protege.editor.owl.model.OWLModelManager;
+import org.semanticweb.owlapi.rdf.turtle.parser.TurtleParser;
+import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.rdf.rdfxml.parser.OWLRDFConsumer;
+import org.protege.editor.owl.model.*;
 import org.protege.editor.owl.ui.action.ProtegeOWLAction;
-
 
 public class CsvWizard extends Application {
 
@@ -258,20 +263,46 @@ public class CsvWizard extends Application {
         saveButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
-                FileChooser fileChooser = new FileChooser();
-                fileChooser.setTitle("Save " + selectedFileName + " as RDF");
-                //Specify we are saving RDF files here
-		List<String> supportedExts = Arrays.asList("*.rdf", "*.xml", "*.owl");
-                FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("RDF files (*.rdf, *.xml, *.owl)", supportedExts);
-                fileChooser.getExtensionFilters().add(extFilter);
-                //Default name for file is the input file's name
-                fileChooser.setInitialFileName(selectedFileName + ".rdf");
+                if (runAsPlugin) {
+                    // Load into open Ontology in Protege instead of separate file
+                    OWLOntology actOntology = modelManager.getActiveOntology();
+                    OWLOntologyManager ontManager = actOntology.getOWLOntologyManager();
+                    OWLDataFactory owlFactory = ontManager.getOWLDataFactory();
+                    Model model = csvHandler.getModel();
+                    StmtIterator stmtIt = model.listStatements();
+                    System.out.println("Importing CsvToRdf data to Protege...");
+                    while (stmtIt.hasNext()) {
+                            Statement stmt = stmtIt.next();
+                            //System.err.println("Adding statement: <" + stmt.getSubject().toString() + ", " + stmt.getPredicate().toString() + ", " + stmt.getObject().toString() + ">");
+                            // Add subject if not in Ontology
+                            OWLNamedIndividual sub = owlFactory.getOWLNamedIndividual(IRI.create(stmt.getSubject().getURI()));
+                            ontManager.addAxiom(actOntology, owlFactory.getOWLDeclarationAxiom(sub));
+                            // Add predicate if not in Ontology
+                            // FIXME: Handle ObjectProperty
+                            OWLDataProperty pred = owlFactory.getOWLDataProperty(IRI.create(stmt.getPredicate().getURI()));
+                            ontManager.addAxiom(actOntology, owlFactory.getOWLDeclarationAxiom(pred));
+                            // FIXME: Assumes object of triple is literal
+                            // Add triple assertion
+                            // FIXME: Check return status of addAxiom()
+                            ontManager.addAxiom(actOntology, owlFactory.getOWLDataPropertyAssertionAxiom(pred, sub, owlFactory.getOWLLiteral(stmt.getObject().toString())));
+                    }
+                    System.out.println("Successfully Imported!");
+                } else {
+                    FileChooser fileChooser = new FileChooser();
+                    fileChooser.setTitle("Save " + selectedFileName + " as RDF");
+                    //Specify we are saving RDF files here
+	            List<String> supportedExts = Arrays.asList("*.rdf", "*.xml", "*.owl");
+                    FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("RDF files (*.rdf, *.xml, *.owl)", supportedExts);
+                    fileChooser.getExtensionFilters().add(extFilter);
+                    //Default name for file is the input file's name
+                    fileChooser.setInitialFileName(selectedFileName + ".rdf");
 
-                //Show save file dialog
-                File file = fileChooser.showSaveDialog(null);
+                    //Show save file dialog
+                    File file = fileChooser.showSaveDialog(null);
 
-                if (file != null) {
-                    csvHandler.outputModel(file.getAbsolutePath());
+                    if (file != null) {
+                        csvHandler.outputModel(file.getAbsolutePath());
+                    }
                 }
             }
         });;
