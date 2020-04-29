@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Arrays;
 import java.util.Optional;
 import java.lang.Math;
+import java.lang.Exception;
 
 // Java GUI
 import javafx.concurrent.Task;
@@ -52,6 +53,7 @@ import org.apache.jena.util.iterator.ExtendedIterator;
 // Protege Imports
 import org.semanticweb.owlapi.rdf.turtle.parser.TurtleParser;
 import org.semanticweb.owlapi.model.*;
+import org.semanticweb.owlapi.model.parameters.ChangeApplied;
 import org.semanticweb.owlapi.rdf.rdfxml.parser.OWLRDFConsumer;
 import org.protege.editor.owl.model.*;
 import org.protege.editor.owl.ui.action.ProtegeOWLAction;
@@ -334,6 +336,7 @@ public class CsvWizard extends Application {
         Task<Void> saveOntTask = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
+                // load statements
                 long i = 0;
                 while (stmtIt.hasNext()) {
                     Statement stmt = stmtIt.next();
@@ -349,17 +352,46 @@ public class CsvWizard extends Application {
                     updateProgress(i, numStmts);
                     System.err.println("Adding statement (" + i + "/" + numStmts +"): <" + stmt.getSubject().toString() + ", " + stmt.getPredicate().toString() + ", " + stmt.getObject().toString() + ">");
 
+                    ChangeApplied status;
                     // Add subject if not in Ontology
                     OWLNamedIndividual sub = owlFactory.getOWLNamedIndividual(IRI.create(stmt.getSubject().getURI()));
-                    ontManager.addAxiom(actOntology, owlFactory.getOWLDeclarationAxiom(sub));
-                    // Add predicate if not in Ontology
-                    // FIXME: Handle ObjectProperty
-                    OWLDataProperty pred = owlFactory.getOWLDataProperty(IRI.create(stmt.getPredicate().getURI()));
-                    ontManager.addAxiom(actOntology, owlFactory.getOWLDeclarationAxiom(pred));
-                    // FIXME: Assumes object of triple is literal
-                    // Add triple assertion
-                    // FIXME: Check return status of addAxiom()
-                    ontManager.addAxiom(actOntology, owlFactory.getOWLDataPropertyAssertionAxiom(pred, sub, owlFactory.getOWLLiteral(stmt.getObject().toString())));
+                    status = ontManager.addAxiom(actOntology, owlFactory.getOWLDeclarationAxiom(sub));
+                    if (status == ChangeApplied.UNSUCCESSFULLY) {
+                        throw new Exception("Failed adding subject (" + status.toString() + "): " + stmt.getSubject().toString());
+                    }
+                    Property pred = stmt.getPredicate();
+                    RDFNode obj = stmt.getObject();
+                    if (obj.isResource()) {
+                        // Add predicate as ObjectProperty
+                        OWLObjectProperty owlPred = owlFactory.getOWLObjectProperty(IRI.create(pred.getURI()));
+                        status = ontManager.addAxiom(actOntology, owlFactory.getOWLDeclarationAxiom(owlPred));
+                        if(status == ChangeApplied.UNSUCCESSFULLY) {
+                            throw new Exception("Failed adding ObjectProperty (" + status.toString() + "): " + pred.toString());
+                        }
+                        // Add object if not in Ontology
+                        OWLNamedIndividual owlObj = owlFactory.getOWLNamedIndividual(IRI.create(obj.asResource().getURI()));
+                        status = ontManager.addAxiom(actOntology, owlFactory.getOWLDeclarationAxiom(owlObj));
+                        if (status == ChangeApplied.UNSUCCESSFULLY) {
+                            throw new Exception("Failed adding Object (" + status.toString() + "): " + obj.toString());
+                        }
+                        // Add object triple assertion
+                        status = ontManager.addAxiom(actOntology, owlFactory.getOWLObjectPropertyAssertionAxiom(owlPred, sub, owlObj));
+                        if (status == ChangeApplied.UNSUCCESSFULLY) {
+                            throw new Exception("Failed asserting triple (" + status.toString() + "): <" + stmt.getSubject().toString() + "," + pred.toString() + "," + obj.toString() + ">");
+                        }
+                    } else {
+                        // Add predicate as DataProperty
+                        OWLDataProperty owlPred = owlFactory.getOWLDataProperty(IRI.create(pred.getURI()));
+                        status = ontManager.addAxiom(actOntology, owlFactory.getOWLDeclarationAxiom(owlPred));
+                        if (status == ChangeApplied.UNSUCCESSFULLY) {
+                            throw new Exception("Failed adding DataProperty (" + status.toString() + "): " + pred.toString());
+                        }
+                        // Add data triple assertion
+                        status = ontManager.addAxiom(actOntology, owlFactory.getOWLDataPropertyAssertionAxiom(owlPred, sub, owlFactory.getOWLLiteral(obj.toString())));
+                        if (status == ChangeApplied.UNSUCCESSFULLY) {
+                            throw new Exception("Failed asserting triple (" + status.toString() + "): <" + stmt.getSubject().toString() + "," + pred.toString() + "," + obj.toString() + ">");
+                        }
+                    }
                 }
                 System.out.println("Successfully imported!");
                 return null;
@@ -382,7 +414,18 @@ public class CsvWizard extends Application {
         Stage progStage = new Stage();
     	progStage.setScene(new Scene(layout));
         progStage.setAlwaysOnTop(true);
+        progStage.setResizable(false);
         saveOntTask.setOnSucceeded(event -> {progStage.close();});
+        saveOntTask.setOnFailed(event -> {
+            String errMsg = saveOntTask.getException().getMessage();
+            System.err.println(errMsg);
+            Alert errorAlert = new Alert(AlertType.ERROR);
+            errorAlert.setHeaderText("Import Error");
+            errorAlert.setContentText(errMsg);
+            progStage.setAlwaysOnTop(false);
+            errorAlert.showAndWait();
+            progStage.close();
+        });
         progStage.show();
         Thread t1 = new Thread(saveOntTask);
         t1.start();
