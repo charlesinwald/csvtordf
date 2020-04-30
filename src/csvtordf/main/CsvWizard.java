@@ -77,6 +77,7 @@ public class CsvWizard extends Application {
     public boolean runAsPlugin = false;
     private String selectedFileName;
     private CsvToRdf csvHandler = new CsvToRdf();
+    private Image iconImage = new Image(CsvWizard.class.getResourceAsStream("icon.png"));
 
     /**
      * The main entry point of the application, (running on the JavaFX application thread)
@@ -108,9 +109,7 @@ public class CsvWizard extends Application {
 
         stage.setScene(scene);
         stage.setTitle("CSV to RDF Converter");
-        stage.getIcons().add(
-                new Image(
-                        CsvWizard.class.getResourceAsStream("icon.png")));
+        stage.getIcons().add(iconImage);
         Screen screen = Screen.getPrimary();
         Rectangle2D bounds = screen.getVisualBounds();
 
@@ -419,6 +418,8 @@ public class CsvWizard extends Application {
             ).toExternalForm()
         );
         Stage progStage = new Stage();
+        progStage.setTitle("Importing RDF Data");
+        progStage.getIcons().add(iconImage);
     	progStage.setScene(new Scene(layout));
         progStage.setAlwaysOnTop(true);
         progStage.setResizable(false);
@@ -488,9 +489,7 @@ public class CsvWizard extends Application {
       BorderPane border = new BorderPane();
       Scene setupScene = new Scene(border, 1024, 768);
       setupStage.setScene(setupScene);
-      setupStage.getIcons().add(
-                new Image(
-                        CsvWizard.class.getResourceAsStream("icon.png")));
+      setupStage.getIcons().add(iconImage);
 
       // Initialize model with header line from file
       String errMsg = null;
