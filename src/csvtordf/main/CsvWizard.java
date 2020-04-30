@@ -16,12 +16,14 @@ import java.io.*;
 import java.util.concurrent.*;
 import java.util.List;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.lang.Math;
 import java.lang.Exception;
 
 // Java GUI
 import javafx.concurrent.Task;
+import javafx.collections.FXCollections;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -484,13 +486,6 @@ public class CsvWizard extends Application {
      */
     private boolean setupModelProperties() {
       System.out.println("SETTING UP MODEL");
-      Stage setupStage = new Stage();
-      setupStage.setTitle("Setting Up RDF Model");
-      BorderPane border = new BorderPane();
-      Scene setupScene = new Scene(border, 1024, 768);
-      setupStage.setScene(setupScene);
-      setupStage.getIcons().add(iconImage);
-
       // Initialize model with header line from file
       String errMsg = null;
       try {
@@ -537,6 +532,71 @@ public class CsvWizard extends Application {
       //    Use previous row as Resource
       //      This would require a lot of thought though to make it robust,
       //      so this is lower priority stretch goal.
+      Stage setupStage = new Stage();
+      setupStage.setTitle("Setting Up RDF Model");
+      VBox scrollVbox = new VBox();
+      HBox labelHbox = new HBox(new Label("Skip"), new Label("Literal"), new Label("Resource"));
+      labelHbox.setSpacing(10);
+      labelHbox.setPadding(new Insets(10));
+      scrollVbox.getChildren().add(labelHbox);
+      ArrayList<ToggleGroup> toggleGroupList = new ArrayList<>();
+      ArrayList<Property> properties = csvHandler.getProperties();
+      for (Property property : properties) {
+        ToggleGroup tg = new ToggleGroup();
+        RadioButton t1 = new RadioButton();
+        t1.setUserData("Skip");
+        RadioButton t2 = new RadioButton();
+        t2.setUserData("Literal");
+        t2.setSelected(true);
+        RadioButton t3 = new RadioButton();
+        t3.setUserData("Resource");
+        t1.setToggleGroup(tg);
+        t2.setToggleGroup(tg);
+        t3.setToggleGroup(tg);
+        toggleGroupList.add(tg);
+        HBox propHbox = new HBox(t1, t2, t3, new Label(property.toString()));
+        propHbox.setSpacing(10);
+        propHbox.setPadding(new Insets(10));
+        scrollVbox.getChildren().add(propHbox);
+      }
+      scrollVbox.setSpacing(10);
+      scrollVbox.setPadding(new Insets(10));
+      ScrollPane hScrollPane = new ScrollPane();
+      hScrollPane.setContent(scrollVbox);
+      hScrollPane.setPannable(true);
+
+      VBox setupVbox = new VBox();
+      setupVbox.setSpacing(10);
+      setupVbox.setPadding(new Insets(10));
+
+      Label rdfTypeLabel = new Label("RDF Type:");
+      rdfTypeLabel.setPadding(new Insets(5, 5, 5, 5));
+      TextField rdfTypeField = new TextField();
+      rdfTypeField.setPrefColumnCount(30);
+      setupVbox.getChildren().add(new HBox(rdfTypeLabel, rdfTypeField));
+
+      Label objLabel = new Label("Select Object Properties:");
+      setupVbox.getChildren().add(objLabel);
+      setupVbox.getChildren().add(hScrollPane);
+
+      Button continueButton = new Button("Continue");
+      continueButton.setOnMouseClicked(event -> {
+          // TODO: Save RDF Type to set for every CSV line
+          int i = 0;
+          for (Property property : properties) {
+            // TODO: Communicate to CsvToRdf that "Skip" properties should not be parsed,
+            //       and "Resource" properties need to create a new resource for their cell value.
+            String propData = toggleGroupList.get(i).getSelectedToggle().getUserData().toString();
+            System.out.println(property.toString() + " -> " + propData);
+            i++;
+          }
+          setupStage.close();
+      });
+
+      setupVbox.getChildren().add(continueButton);
+      Scene setupScene = new Scene(setupVbox, 1024, 768);
+      setupStage.setScene(setupScene);
+      setupStage.getIcons().add(iconImage);
       setupStage.showAndWait();
       System.out.println("FINISHED SETTING UP MODEL");
       return true;
