@@ -339,6 +339,10 @@ public class CsvWizard extends Application {
                 // load statements
                 long i = 0;
                 while (stmtIt.hasNext()) {
+                    if (this.isCancelled()) {
+                        System.out.println("Cancelling import...");
+                        return null;
+                    }
                     Statement stmt = stmtIt.next();
                     // Calculate ETA and update progress bar and message
                     i++;
@@ -402,8 +406,11 @@ public class CsvWizard extends Application {
         pBar.progressProperty().bind(saveOntTask.progressProperty());
         Label progLabel = new Label("Processing: 0%\tETA:");
         progLabel.textProperty().bind(saveOntTask.messageProperty());
+	Button cancelButton = new Button("Cancel");
+        // TBD: Add a prompt to confirm cancellation?
+	cancelButton.setOnMouseClicked(event -> {saveOntTask.cancel();});
         VBox layout = new VBox(10);
-        layout.getChildren().setAll(progLabel, pBar);
+        layout.getChildren().setAll(progLabel, pBar, cancelButton);
         layout.setPadding(new Insets(10));
         layout.setAlignment(Pos.CENTER);
         layout.getStylesheets().add(
@@ -416,6 +423,7 @@ public class CsvWizard extends Application {
         progStage.setAlwaysOnTop(true);
         progStage.setResizable(false);
         saveOntTask.setOnSucceeded(event -> {progStage.close();});
+        saveOntTask.setOnCancelled(event -> {progStage.close();});
         saveOntTask.setOnFailed(event -> {
             String errMsg = saveOntTask.getException().getMessage();
             System.err.println(errMsg);
@@ -426,6 +434,7 @@ public class CsvWizard extends Application {
             errorAlert.showAndWait();
             progStage.close();
         });
+
         progStage.show();
         Thread t1 = new Thread(saveOntTask);
         t1.start();
@@ -484,6 +493,7 @@ public class CsvWizard extends Application {
                         CsvWizard.class.getResourceAsStream("icon.png")));
 
       // Initialize model with header line from file
+      String errMsg = null;
       try {
         FileInputStream fIn = new FileInputStream(selectedFilePath);
         BufferedReader br = new BufferedReader(new InputStreamReader(fIn));
@@ -491,22 +501,19 @@ public class CsvWizard extends Application {
         String[] tokens = line.split(",");
         csvHandler.initModel(tokens);
       } catch (FileNotFoundException e) {
-	Alert errorAlert = new Alert(AlertType.ERROR);
-        errorAlert.setHeaderText("CSV conversion Error");
-        errorAlert.setContentText("No such file: " + selectedFilePath);
-        errorAlert.showAndWait();
-        return false;
+        errMsg = "No such file: " + selectedFilePath;
       } catch (IOException e) {
-        Alert errorAlert = new Alert(AlertType.ERROR);
-	errorAlert.setHeaderText("CSV Conversion Error");
-	errorAlert.setContentText("Failed reading file: " + selectedFilePath);
-	errorAlert.showAndWait();
-	return false;
+	errMsg = "Failed reading file: " + selectedFilePath;
       } catch (Exception e) {
-        Alert errorAlert = new Alert(AlertType.ERROR);
-        errorAlert.setHeaderText("CSV Conversion Error");
-	errorAlert.setContentText(e.getMessage());
-	return false;
+        errMsg = e.getMessage();
+      } finally {
+        if (errMsg != null) {
+          Alert errorAlert = new Alert(AlertType.ERROR);
+          errorAlert.setHeaderText("Initialization Error");
+          errorAlert.setContentText(errMsg);
+          errorAlert.showAndWait();
+          return false;
+        }
       }
 
       // TODO: Set up rest of stage for augmenting data
