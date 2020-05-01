@@ -32,7 +32,7 @@ java -Dprism.order=sw csvtordf.main.CsvWizard
 ## Features <a name="features"></a>
 ### Import CSV File
 > Select a CSV file to convert to RDF data. The headers will define the properties, and each subsequent row will be considered a new resource. A resource prefix may be specified as well.
-![Import GIF](https://github.com/charlesinwald/csvtordf/tree/master/images/import.gif)
+![Import GIF](images/import.gif)
 
 ### Multithreading
 > Increase number of threads to potentially reduce conversion time on large data sets
