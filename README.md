@@ -36,11 +36,11 @@ java -Dprism.order=sw csvtordf.main.CsvWizard
 
 ### Multithreading
 > Increase number of threads to potentially reduce conversion time on large data sets
-![MultiThreading GIF](https://github.com/charlesinwald/csvtordf/tree/master/images/multithreading.gif)
+![MultiThreading GIF](images/multithreading.gif)
 
 ### Saving
 > Save the generated RDF data to an XML file
-![Saving GIF](https://github.com/charlesinwald/csvtordf/tree/master/images/saving.gif)
+![Saving GIF](images/saving.gif)
 
 ### Augmenting Input
 > Augment the input data to apply to all imported resources.
@@ -73,7 +73,7 @@ when Protege is next launched.
 
 ## Plugin Features <a name="pluginfeatures"></a>
 > The Plugin will be available under the Tools menu
-![Tools GIF](https://github.com/charlesinwald/csvtordf/tree/masterimages/tools.gif)
+![Tools GIF](tools.gif)
 
 The generated RDF triples will be imported to the current Protege Ontology, creating new instances and properties as needed.
 
