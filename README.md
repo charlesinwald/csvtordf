@@ -58,7 +58,6 @@ java -Dprism.order=sw csvtordf.main.CsvWizard
 - ANT is installed.
 
 A sample script `buildplugin.sh` is provided. Alternatively, this can be built manually by:
-```
 1. Setting Environment Variables
     a. PROTEGE_HOME - Home directory of Protege installation
     b. ANT_HOME - Home directory of Ant installation
@@ -78,7 +77,7 @@ when Protege is next launched.
 ## Plugin Features <a name="pluginfeatures"></a>
 > The Plugin will be available under the Tools menu
 
-![Tools GIF](tools.gif)
+![Tools GIF](images/tools.gif)
 
 The generated RDF triples will be imported to the current Protege Ontology, creating new instances and properties as needed.
 
