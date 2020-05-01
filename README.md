@@ -32,14 +32,17 @@ java -Dprism.order=sw csvtordf.main.CsvWizard
 ## Features <a name="features"></a>
 ### Import CSV File
 > Select a CSV file to convert to RDF data. The headers will define the properties, and each subsequent row will be considered a new resource. A resource prefix may be specified as well.
+
 ![Import GIF](images/import.gif)
 
 ### Multithreading
 > Increase number of threads to potentially reduce conversion time on large data sets
+
 ![MultiThreading GIF](images/multithreading.gif)
 
 ### Saving
 > Save the generated RDF data to an XML file
+
 ![Saving GIF](images/saving.gif)
 
 ### Augmenting Input
@@ -64,7 +67,8 @@ A sample script `buildplugin.sh` is provided. Alternatively, this can be built m
 2. Copy jfxrt.jar from Protege to lib/
     - On Mac, this is typically in Protege.app/Contents/Plugins/JRE/Contents/Home/jre/lib/ext/
     - On Windows and Linux, this is typically in jre/lib/ext/
-
+```
+```
 $ ant install -v
 ```
 
@@ -73,6 +77,7 @@ when Protege is next launched.
 
 ## Plugin Features <a name="pluginfeatures"></a>
 > The Plugin will be available under the Tools menu
+
 ![Tools GIF](tools.gif)
 
 The generated RDF triples will be imported to the current Protege Ontology, creating new instances and properties as needed.
