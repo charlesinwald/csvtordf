@@ -32,15 +32,15 @@ java -Dprism.order=sw csvtordf.main.CsvWizard
 ## Features <a name="features"></a>
 ### Import CSV File
 > Select a CSV file to convert to RDF data. The headers will define the properties, and each subsequent row will be considered a new resource. A resource prefix may be specified as well.
-![Import GIF](https://github.com/charlesinwald/csvtordf/images/import.gif)
+![Import GIF](https://github.com/charlesinwald/csvtordf/tree/master/images/import.gif)
 
 ### Multithreading
 > Increase number of threads to potentially reduce conversion time on large data sets
-![MultiThreading GIF](https://github.com/charlesinwald/csvtordf/images/multithreading.gif)
+![MultiThreading GIF](https://github.com/charlesinwald/csvtordf/tree/master/images/multithreading.gif)
 
 ### Saving
 > Save the generated RDF data to an XML file
-![Saving GIF](https://github.com/charlesinwald/csvtordf/images/saving.gif)
+![Saving GIF](https://github.com/charlesinwald/csvtordf/tree/master/images/saving.gif)
 
 ### Augmenting Input
 > Augment the input data to apply to all imported resources.
@@ -73,7 +73,7 @@ when Protege is next launched.
 
 ## Plugin Features <a name="pluginfeatures"></a>
 > The Plugin will be available under the Tools menu
-![Tools GIF](https://github.com/charlesinwald/csvtordf/images/tools.gif)
+![Tools GIF](https://github.com/charlesinwald/csvtordf/tree/masterimages/tools.gif)
 
 The generated RDF triples will be imported to the current Protege Ontology, creating new instances and properties as needed.
 
