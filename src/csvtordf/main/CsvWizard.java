@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.lang.Math;
+import java.lang.Boolean;
 import java.lang.Exception;
 
 // Java GUI
@@ -535,26 +536,66 @@ public class CsvWizard extends Application {
       Stage setupStage = new Stage();
       setupStage.setTitle("Setting Up RDF Model");
       VBox scrollVbox = new VBox();
-      HBox labelHbox = new HBox(new Label("Skip"), new Label("Literal"), new Label("Resource"));
-      labelHbox.setSpacing(10);
+      // TODO: maybe make this pane a grid? these labels don't line up right
+      HBox labelHbox = new HBox(new Label("Skip"), new Label("Literal"), new Label("Resource"),
+                                new Label("Property"), new Label("Type"));
+      labelHbox.setSpacing(20);
       labelHbox.setPadding(new Insets(10));
       scrollVbox.getChildren().add(labelHbox);
       ArrayList<ToggleGroup> toggleGroupList = new ArrayList<>();
+      ArrayList<TextField> textFieldList = new ArrayList<>();
       ArrayList<Property> properties = csvHandler.getProperties();
       for (Property property : properties) {
+        // Add row for each property
         ToggleGroup tg = new ToggleGroup();
-        RadioButton t1 = new RadioButton();
-        t1.setUserData("Skip");
-        RadioButton t2 = new RadioButton();
-        t2.setUserData("Literal");
-        t2.setSelected(true);
-        RadioButton t3 = new RadioButton();
-        t3.setUserData("Resource");
-        t1.setToggleGroup(tg);
-        t2.setToggleGroup(tg);
-        t3.setToggleGroup(tg);
+        RadioButton r1 = new RadioButton();
+        r1.setUserData("Skip");
+        RadioButton r2 = new RadioButton();
+        r2.setUserData("Literal");
+        r2.setSelected(true);
+        RadioButton r3 = new RadioButton();
+        r3.setUserData("Resource");
+        r1.setToggleGroup(tg);
+        r2.setToggleGroup(tg);
+        r3.setToggleGroup(tg);
         toggleGroupList.add(tg);
-        HBox propHbox = new HBox(t1, t2, t3, new Label(property.toString()));
+        TextField tf = new TextField();
+        tf.setPromptText("literal type...");
+        //tf.getParent().requestFocus();
+        tf.setPrefColumnCount(20);
+	textFieldList.add(tf);
+
+        // Set hint depending on which radio button is selected
+   	r1.selectedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> obs, Boolean wasSel, Boolean isSel) {
+                if(isSel) {
+                  tf.setPromptText("");
+                  tf.setDisable(true);
+                }
+            }
+        });
+        r2.selectedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> obs, Boolean wasSel, Boolean isSel) {
+                if(isSel) {
+                  tf.setPromptText("literal type...");
+                  tf.setDisable(false);
+                }
+            }
+        });
+        r3.selectedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> obs, Boolean wasSel, Boolean isSel) {
+                if(isSel) {
+                  tf.setPromptText("resource type...");
+                  tf.setDisable(false);
+                }
+            }
+        });
+
+
+        HBox propHbox = new HBox(r1, r2, r3, new Label(property.toString()), tf);
         propHbox.setSpacing(10);
         propHbox.setPadding(new Insets(10));
         scrollVbox.getChildren().add(propHbox);
@@ -584,10 +625,13 @@ public class CsvWizard extends Application {
           // TODO: Save RDF Type to set for every CSV line
           int i = 0;
           for (Property property : properties) {
-            // TODO: Communicate to CsvToRdf that "Skip" properties should not be parsed,
-            //       and "Resource" properties need to create a new resource for their cell value.
             String propData = toggleGroupList.get(i).getSelectedToggle().getUserData().toString();
-            System.out.println(property.toString() + " -> " + propData);
+            String propType = textFieldList.get(i).getText();
+            if (propData.equals("Skip")) {
+                csvHandler.markSkipped(property);
+            }
+            // TODO: Handle setting Resource properties in CsvToRdf
+            System.out.println(property.toString() + " -> " + propData + " (" + propType + ")");
             i++;
           }
           setupStage.close();

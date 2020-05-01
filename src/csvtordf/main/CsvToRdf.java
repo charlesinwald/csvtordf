@@ -14,6 +14,8 @@ package csvtordf.main;
 // Java imports
 import java.io.*;
 import java.lang.reflect.Array;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.Consumer;
@@ -48,12 +50,14 @@ class MultiThreadCsvProcessor implements Runnable {
   private final int startNum, endNum;
   private Model model;
   private final ArrayList<Property> properties;
+  private final Set<Property> skipProps;
 
-  public MultiThreadCsvProcessor(Model model, String prefix, ArrayList<Property> properties,
+  public MultiThreadCsvProcessor(Model model, String prefix, ArrayList<Property> properties, Set<Property> skipProps,
 		                 String[] lines, int startNum, int endNum) {
     this.model = model;
     this.prefix = prefix;
     this.properties = properties;
+    this.skipProps = skipProps;
     this.lines = lines;
     this.startNum = startNum;
     this.endNum = endNum;
@@ -79,7 +83,10 @@ class MultiThreadCsvProcessor implements Runnable {
         for (int j = 0; j < tokens[i % arrayLength].length; j++) {
           //jth property is the predicate
           //cell is the object
-          instance.addProperty(properties.get(j), tokens[i % arrayLength][j]);
+          Property property = properties.get(j);
+          if (!skipProps.contains(property)) {
+            instance.addProperty(property, tokens[i % arrayLength][j]);
+          }
         }
       }
     } finally {
@@ -103,6 +110,7 @@ public class CsvToRdf extends Object {
   // Jena model definitions
   private Model model;
   private ArrayList<Property> properties = new ArrayList<>();
+  private Set<Property> skipProps = new HashSet<Property>();
   private String prefix = "http://example.org/csv#";
 
   // Set once model is loaded the first time
@@ -213,13 +221,13 @@ public class CsvToRdf extends Object {
         linesArray[num % BATCH_SIZE] = line;
 	num++;
 	if (num % BATCH_SIZE == 0) {
-	  service.execute(new MultiThreadCsvProcessor(model, prefix, properties,
+	  service.execute(new MultiThreadCsvProcessor(model, prefix, properties, skipProps,
 				                      linesArray, num - BATCH_SIZE, num - 1));
 	}
       }
       // Launch any remaining
       if (num % BATCH_SIZE != 0) {
-        service.execute(new MultiThreadCsvProcessor(model, prefix, properties,
+        service.execute(new MultiThreadCsvProcessor(model, prefix, properties, skipProps,
 				                    linesArray, (num / BATCH_SIZE) * BATCH_SIZE, num - 1));
       }
 
@@ -276,6 +284,17 @@ public class CsvToRdf extends Object {
     }
 
     initialized = true;
+  }
+
+  /*
+   *
+   * Mark a property to skip importing
+   *
+   * @param property - Property to skip
+   *
+   */
+  public void markSkipped(Property property) {
+    skipProps.add(property);
   }
 
   /**
@@ -371,6 +390,7 @@ public class CsvToRdf extends Object {
   public void setPrefix(String p) { prefix = p; }
   public String getPrefix() { return prefix; }
   public Model getModel() { return model; }
+  public ArrayList<Property> getProperties() { return properties; }
   public long getLastExecTime() { return lastExecTime; }
   public String getLastErrorMsg() { return lastErrorMsg; }
 }
