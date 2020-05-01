@@ -67,7 +67,6 @@ A sample script `buildplugin.sh` is provided. Alternatively, this can be built m
     - On Mac, this is typically in Protege.app/Contents/Plugins/JRE/Contents/Home/jre/lib/ext/
     - On Windows and Linux, this is typically in jre/lib/ext/
 ```
-```
 $ ant install -v
 ```
 
