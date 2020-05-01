@@ -59,10 +59,10 @@ java -Dprism.order=sw csvtordf.main.CsvWizard
 
 A sample script `buildplugin.sh` is provided. Alternatively, this can be built manually by:
 1. Setting Environment Variables
-    a. PROTEGE_HOME - Home directory of Protege installation
-    b. ANT_HOME - Home directory of Ant installation
-    c. JAVA_HOME - Home directory of Java installation
-    d. PATH - should include JDK8 and Ant in PATH
+    - PROTEGE_HOME - Home directory of Protege installation
+    - ANT_HOME - Home directory of Ant installation
+    - JAVA_HOME - Home directory of Java installation
+    - PATH - should include JDK8 and Ant in PATH
 2. Copy jfxrt.jar from Protege to lib/
     - On Mac, this is typically in Protege.app/Contents/Plugins/JRE/Contents/Home/jre/lib/ext/
     - On Windows and Linux, this is typically in jre/lib/ext/
