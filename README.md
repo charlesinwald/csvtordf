@@ -81,6 +81,7 @@ when Protege is next launched.
 The generated RDF triples will be imported to the current Protege Ontology, creating new instances and properties as needed.
 
 ## Team <a name="team"></a>
-- Cody D'Ambrosio
-- Paul Grocholske
-- Charles Inwald
+- [Cody D'Ambrosio](https://github.com/cjd218)
+- [Paul Grocholske](https://github.com/PGrocholske)
+- [Charles Inwald](https://github.com/charlesinwald)
+Contact us: [email](mailto:cjd218@lehigh.edu,pag314@lehigh.edu,cci219@lehigh.edu?subject=[GitHub]%20CSVToRDF)
