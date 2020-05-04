@@ -1,13 +1,12 @@
 /**
- * CsvPlugin.java
+ * <h1>CsvPlugin.java<h1>
  * <p>
- * Authors:
- * Cody D'Ambrosio || cjd218 || cjd218@lehigh.edu
- * Charles Inwald  || cci219 || cci219@lehigh.edu
- * Paul Grocholske || pag314 || pag314@lehigh.edu
+ * @author Cody D'Ambrosio || cjd218 || cjd218@lehigh.edu
+ * @author Charles Inwald  || cci219 || cci219@lehigh.edu
+ * @author Paul Grocholske || pag314 || pag314@lehigh.edu
  * <p>
- * <p>
- * FIXME: Add description of application
+ * Wrapper class around CsvWizard to handle launching from
+ * the Protege Ontology Editor as a plugin tool.
  */
 package csvtordf.main;
 
@@ -34,6 +33,10 @@ class LaunchApp implements Runnable {
   }
 }
 
+/**
+ * Class for extending Wizard Application to Protege
+ * Ontology Editor as a plugin.
+ */
 public class CsvPlugin extends ProtegeOWLAction {
 
   private boolean launched = false;
@@ -42,6 +45,9 @@ public class CsvPlugin extends ProtegeOWLAction {
 
   public void dispose() throws Exception {}
 
+  /**
+   * Entry point of plugin when called from Protege.
+   */
   public void actionPerformed(ActionEvent event) {
     String[] args = {"plugin"};
     CsvWizard.modelManager = getOWLModelManager();

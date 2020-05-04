@@ -1,13 +1,24 @@
 /**
- * CsvToRdf.java
+ * <h1>CsvToRdf.java<h1>
  * <p>
- * Authors:
- * Cody D'Ambrosio || cjd218 || cjd218@lehigh.edu
- * Charles Inwald  || cci219 || cci219@lehigh.edu
- * Paul Grocholske || pag314 || pag314@lehigh.edu
+ * @author Cody D'Ambrosio || cjd218 || cjd218@lehigh.edu
+ * @author Charles Inwald  || cci219 || cci219@lehigh.edu
+ * @author Paul Grocholske || pag314 || pag314@lehigh.edu
  * <p>
+ * The CsvToRdf class provides an API for importing CSV data
+ * sets into RDF XML syntax. A basic command-line interface
+ * is supported from main(). However, the intention is for
+ * another class to use the public class functions provided
+ * here to handle instantiation and handling the CSV to
+ * RDF conversion.
  * <p>
- * FIXME: Add description of application
+ * The first row in the CSV data file will be considered
+ * the header, where each cell represents a property.
+ * Every subsequent row will represent a new resource. Each
+ * column of that resource will be used to create a new
+ * RDF triple, where the row resource is the subject,
+ * the header property is the predicate, and the cell value
+ * for that row and column is the object.
  */
 package csvtordf.main;
 
@@ -130,6 +141,13 @@ public class CsvToRdf extends Object {
     org.apache.jena.atlas.logging.LogCtl.setCmdLogging();
   }
 
+  /**
+   *
+   * Main entry point for CLI execution. Does not supporting augmenting
+   * input data.
+   *
+   * @param args CLI options input.
+   */
   public static void main(String[] args) {
     // Setup arguments to command line
     Options options = new Options();
@@ -194,10 +212,10 @@ public class CsvToRdf extends Object {
   /**
    * Read in a CSV input file, breaking it down into strings
    *
-   * @param inputFilePath - path to CSV input file relative to working directory
-   * @param threads - number of threads for multithreaded parsing
+   * @param inputFilePath Path to CSV input file relative to working directory
+   * @param threads Number of threads for multithreaded parsing
    *
-   * return boolean - true if successful, false otherwise.
+   * @return boolean - true if successful, false otherwise.
    */
   public boolean readInputFile(String inputFilePath, int threads) {
     try {
@@ -279,7 +297,7 @@ public class CsvToRdf extends Object {
   /**
    * Create a model and create properties from CSV headers
    *
-   * @param headers - first line of CSV file, split on commas
+   * @param headers String array of headers in first line of CSV file, split on commas.
    *
    */
   public void initModel(String[] headers) {
@@ -297,11 +315,11 @@ public class CsvToRdf extends Object {
     initialized = true;
   }
 
-  /*
+  /**
    *
-   * Mark a property to skip importing
+   * Mark a property to skip importing.
    *
-   * @param property - Property to skip
+   * @param property Property to skip
    *
    */
   public void markSkipped(Property property) {
@@ -312,9 +330,9 @@ public class CsvToRdf extends Object {
    *
    * Clean string for XML/RDF syntax
    *
-   * @param str - String to be cleaned
+   * @param str String to be cleaned
    *
-   * return String - cleaned string
+   * @return String - cleaned string
    *
    */
   private String cleanStr(String str) {
@@ -359,9 +377,9 @@ public class CsvToRdf extends Object {
 
   /**
    *
-   * Output Jena Model to XML file or stdout
+   * Output Jena Model to XML file or stdout.
    *
-   * @params outFilePath - path to output RDF XML file or STDOUT
+   * @param outFilePath path to output RDF XML file or STDOUT
    *
    */
   public void outputModel(String outFilePath) {
@@ -397,11 +415,49 @@ public class CsvToRdf extends Object {
     initialized = false;
   }
 
-  /* Basic getters and setters */
+
+  /* BASIC GETTERS AND SETTERS BELOW THIS LINE */
+
+  /**
+   * Set Model Prefix.
+   *
+   * @param p Prefix to use in Model.
+   *
+   */
   public void setPrefix(String p) { prefix = p; }
+
+  /**
+   * Get Model Prefix.
+   *
+   * @return String - Prefix set in Model.
+   */
   public String getPrefix() { return prefix; }
+
+  /**
+   * Get Jena Model.
+   *
+   * @return Model - Model being manipulated.
+   */
   public Model getModel() { return model; }
+
+  /**
+   * Get Properties defined in Jena Model that were parsed from CSV.
+   *
+   * @return ArrayList&lt;Property&gt; - List of Properties.
+   */
   public ArrayList<Property> getProperties() { return properties; }
+
+  /**
+   * Get the execution time in milliseconds of the last conversion.
+   *
+   * @return long - execution time in milliseconds.
+   */
   public long getLastExecTime() { return lastExecTime; }
+
+  /**
+   * Get the last error message from a failed conversion.
+   *
+   * @return String - error message.
+   */
   public String getLastErrorMsg() { return lastErrorMsg; }
 }

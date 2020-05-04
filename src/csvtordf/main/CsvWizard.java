@@ -1,13 +1,19 @@
 /**
- * CsvWizard.java
+ * <h1>CsvWizard.java<h1>
  * <p>
- * Authors:
- * Cody D'Ambrosio || cjd218 || cjd218@lehigh.edu
- * Charles Inwald  || cci219 || cci219@lehigh.edu
- * Paul Grocholske || pag314 || pag314@lehigh.edu
+ * @author Cody D'Ambrosio || cjd218 || cjd218@lehigh.edu
+ * @author Charles Inwald  || cci219 || cci219@lehigh.edu
+ * @author Paul Grocholske || pag314 || pag314@lehigh.edu
  * <p>
+ * GUI Wizard for importing a CSV file and converting it to
+ * RDF syntax. The GUI can handle opening a CSV file, converting
+ * it, and either saving it to a new XML document or importing
+ * it to Protege.
  * <p>
- * FIXME: Add description of application
+ * The Wizard can also guide a user through modifying parameters
+ * of the CSV data before importing. For example, the RDF:type
+ * of each row can be specified once and will be applied to
+ * each line as imported.
  */
 package csvtordf.main;
 
@@ -61,10 +67,13 @@ import org.semanticweb.owlapi.rdf.rdfxml.parser.OWLRDFConsumer;
 import org.protege.editor.owl.model.*;
 import org.protege.editor.owl.ui.action.ProtegeOWLAction;
 
+/**
+ * Main class for launching CSV conversion application as a JavaFX GUI.
+ */
 public class CsvWizard extends Application {
 
-    public static final String LEFT_PANE_TITLE = "Options";
-    public static final int DEFAULT_NUMBER_OF_THREADS = 1;
+    private static final String LEFT_PANE_TITLE = "Options";
+    private static final int DEFAULT_NUMBER_OF_THREADS = 1;
     //The maximum amount of threads they should be able to run
     int processors = Runtime.getRuntime().availableProcessors();
     private String selectedFilePath;
@@ -130,6 +139,8 @@ public class CsvWizard extends Application {
      * Build top bar of GUI window, which is used to select the file to import.
      * This calls CsvToRdf on the button press to handle the conversion.
      *
+     * @return HBox - Horizontal Box for top of GUI
+     *
      */
     private HBox buildTopBar() {
         Label l = new Label("Prefix:");
@@ -160,7 +171,6 @@ public class CsvWizard extends Application {
             public void handle(ActionEvent e) {
                 csvHandler.clearModel(); // clear out any previous
                 csvHandler.setPrefix(prefixField.getText());
-                //TODO: UI elements for schema
 	        Alert askForHelp = new Alert(AlertType.CONFIRMATION,
 				             "Would you like to launch setup helper?",
 					     ButtonType.YES, ButtonType.NO);
@@ -210,7 +220,6 @@ public class CsvWizard extends Application {
                 fileChooser.getExtensionFilters().add(extFilter);
 
                 File selectedFile = fileChooser.showOpenDialog(null);
-                //TODO handle if they supply incorrect path
                 selectedFileName = selectedFile.getName().replaceFirst("[.][^.]+$", "");;
                 selectedFilePath = selectedFile.getPath();
                 System.out.println(selectedFilePath);
@@ -235,6 +244,8 @@ public class CsvWizard extends Application {
      *
      * Build left pane of GUI window, which is used to select the number of threads
      * and save the RDF generated.
+     *
+     * @return VBox - Vertical Box for left of GUI
      *
      */
     private VBox buildLeftPane() {
@@ -305,6 +316,8 @@ public class CsvWizard extends Application {
      *
      * Build center pane of GUI window, which is used for displaying a previous of the generated
      * RDF XML model.
+     *
+     * @return VBox - Vertical Box for center of GUI
      *
      */
     private VBox buildCenterPane() {
@@ -489,6 +502,8 @@ public class CsvWizard extends Application {
      *
      * Open new window to guide user through setting up special
      * attributes of the model before importing every row in the CSV file.
+     *
+     * @return boolean - true if Model was setup properly, false otherwise.
      *
      */
     private boolean setupModelProperties() {
