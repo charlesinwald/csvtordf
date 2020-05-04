@@ -9,6 +9,7 @@ There is an abundance of widely available data sets across the web. Unfortunatel
 - [Protege](#protege)
   - [Build Plugin](#buildplugin)
   - [Plugin Features](#pluginfeatures)
+- [JavaDocs](#javadocs)
 - [Team](#team)
 
 ## Build <a name="build"></a>
@@ -49,7 +50,11 @@ java -Dprism.order=sw csvtordf.main.CsvWizard
 > Augment the input data to apply to all imported resources.
 
 ## Protege <a name="protege"></a>
-> If you are seeing this, there currently is no JAR file to install. Please build and run manually.
+Prebuilt plugin packages have been provided and tested with Protege 5.5.0. Simply place the JAR file
+in the Protege plugins directory.
+- Windows: [csvtordf-plugin-windows.jar](builds/csvtordf-plugin-windows.jar)
+- Mac: [csvtordf-plugin-mac.jar](builds/csvtordf-plugin-mac.jar)
+- Linux: [csvtordf-plugin-linux.jar](builds/csvtordf-plugin-linux.jar)
 
 ### Build Plugin <a name="buildplugin"></a>
 #### Prerequisites
@@ -79,6 +84,9 @@ when Protege is next launched.
 ![Tools GIF](images/tools.gif)
 
 The generated RDF triples will be imported to the current Protege Ontology, creating new instances and properties as needed.
+
+## JavaDocs <a name="javadocs"></a>
+> See API documentation [here](docs/index.html}
 
 ## Team <a name="team"></a>
 - [Cody D'Ambrosio](https://github.com/cjd218)

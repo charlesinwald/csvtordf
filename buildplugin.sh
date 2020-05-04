@@ -46,11 +46,24 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+# Clear out any plugin already built previously by old name
+rm -f "${PROTEGE_HOME}/plugins/csvtordf.jar"
+rm -f "${PROTEGE_HOME}/Protégé.app/Contents/Java/plugins/csvtordf.jar"
+
 # ant build
 echo "Running ant install..."
 rm -rf build/ && ant install -v
 if [ $? -ne 0 ]; then
 	exit 1
+fi
+
+# Copy to builds for saving to Git
+mkdir -p builds/
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  cp "${PROTEGE_HOME}/Protégé.app/Contents/Java/plugins/csvtordf-plugin.jar" builds/csvtordf-plugin-mac.jar || exit $?
+else
+  cp "${PROTEGE_HOME}/plugins/csvtordf-plugin.jar" builds/csvtordf-plugin-windows.jar || exit $?
+  cp builds/csvtordf-plugin-windows.jar builds/csvtordf-plugin-linux.jar || exit $?
 fi
 
 #Test - currently broken
