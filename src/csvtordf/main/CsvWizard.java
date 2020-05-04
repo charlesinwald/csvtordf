@@ -342,7 +342,6 @@ public class CsvWizard extends Application {
         // Want to show a nice progress bar since this can take a while,
         // Setup separate Task that will be run
         final long numStmts = model.size();
-	final long startTime = System.currentTimeMillis();
         Task<Void> saveOntTask = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
@@ -355,17 +354,16 @@ public class CsvWizard extends Application {
                         return null;
                     }
                     Statement stmt = stmtIt.next();
-                    // Calculate ETA and update progress bar and message
+                    // update progress bar and message
                     i++;
-                    long runningTime = System.currentTimeMillis() - startTime;
-                    long remainingTime = (runningTime / i) * (numStmts - i);
-                    String eta = String.format("%02d:%02d:%02d",
-                                               (remainingTime / (1000*60*60)) % 24, // hours
-                                               (remainingTime / (1000 * 60)) % 60,  // minutes
-                                               (remainingTime / 1000) % 60);        // seconds
-                    updateMessage("Processing: " + (int)(100 * (double)i/numStmts) + "% complete\tETA: " + eta);
+                    if (i < numStmts) {
+                      updateMessage("Preparing: " + (int)(100 * (double)i/numStmts) + "% complete");
+		    } else {
+                      updateMessage("Importing...");
+                    }
                     updateProgress(i, numStmts);
-                    //System.err.println("Adding statement (" + i + "/" + numStmts +"): <" + stmt.getSubject().toString() + ", " + stmt.getPredicate().toString() + ", " + stmt.getObject().toString() + ">");
+                    // This seems to reduce chance of deadlocking later...
+                    System.err.println("Adding statement (" + i + "/" + numStmts +"): <" + stmt.getSubject().toString() + ", " + stmt.getPredicate().toString() + ", " + stmt.getObject().toString() + ">");
 
                     // Add subject if not in Ontology
                     OWLNamedIndividual sub = owlFactory.getOWLNamedIndividual(IRI.create(stmt.getSubject().getURI()));
@@ -391,6 +389,7 @@ public class CsvWizard extends Application {
                 }
                 // Need to add all at once or Protege can deadlock and throw exceptions.
                 // This is a BUG in Protege/OWLAPI !!
+                // https://github.com/protegeproject/protege/issues/954
                 ChangeApplied status = ontManager.addAxioms(actOntology, newAxioms);
                 if (status == ChangeApplied.UNSUCCESSFULLY) {
                     throw new Exception("Failed to add new axioms");
