@@ -20,10 +20,7 @@ package csvtordf.main;
 // Java imports
 import java.io.*;
 import java.util.concurrent.*;
-import java.util.List;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.Optional;
+import java.util.*;
 import java.lang.Math;
 import java.lang.Boolean;
 import java.lang.Exception;
@@ -335,7 +332,6 @@ public class CsvWizard extends Application {
      *
      */
     private void saveToOntology() {
-        // FIXME: Exceptions are thrown during this, even though it appears to complete successfully
         OWLOntology actOntology = modelManager.getActiveOntology();
         OWLOntologyManager ontManager = actOntology.getOWLOntologyManager();
         OWLDataFactory owlFactory = ontManager.getOWLDataFactory();
@@ -352,6 +348,7 @@ public class CsvWizard extends Application {
             protected Void call() throws Exception {
                 // load statements
                 long i = 0;
+                Set<OWLAxiom> newAxioms = new HashSet<OWLAxiom>();
                 while (stmtIt.hasNext()) {
                     if (this.isCancelled()) {
                         System.out.println("Cancelling import...");
@@ -368,48 +365,35 @@ public class CsvWizard extends Application {
                                                (remainingTime / 1000) % 60);        // seconds
                     updateMessage("Processing: " + (int)(100 * (double)i/numStmts) + "% complete\tETA: " + eta);
                     updateProgress(i, numStmts);
-                    System.err.println("Adding statement (" + i + "/" + numStmts +"): <" + stmt.getSubject().toString() + ", " + stmt.getPredicate().toString() + ", " + stmt.getObject().toString() + ">");
+                    //System.err.println("Adding statement (" + i + "/" + numStmts +"): <" + stmt.getSubject().toString() + ", " + stmt.getPredicate().toString() + ", " + stmt.getObject().toString() + ">");
 
-                    ChangeApplied status;
                     // Add subject if not in Ontology
                     OWLNamedIndividual sub = owlFactory.getOWLNamedIndividual(IRI.create(stmt.getSubject().getURI()));
-                    status = ontManager.addAxiom(actOntology, owlFactory.getOWLDeclarationAxiom(sub));
-                    if (status == ChangeApplied.UNSUCCESSFULLY) {
-                        throw new Exception("Failed adding subject (" + status.toString() + "): " + stmt.getSubject().toString());
-                    }
+                    newAxioms.add(owlFactory.getOWLDeclarationAxiom(sub));
                     Property pred = stmt.getPredicate();
                     RDFNode obj = stmt.getObject();
                     if (obj.isResource()) {
                         // Add predicate as ObjectProperty
                         OWLObjectProperty owlPred = owlFactory.getOWLObjectProperty(IRI.create(pred.getURI()));
-                        status = ontManager.addAxiom(actOntology, owlFactory.getOWLDeclarationAxiom(owlPred));
-                        if(status == ChangeApplied.UNSUCCESSFULLY) {
-                            throw new Exception("Failed adding ObjectProperty (" + status.toString() + "): " + pred.toString());
-                        }
+                        newAxioms.add(owlFactory.getOWLDeclarationAxiom(owlPred));
                         // Add object if not in Ontology
                         OWLNamedIndividual owlObj = owlFactory.getOWLNamedIndividual(IRI.create(obj.asResource().getURI()));
-                        status = ontManager.addAxiom(actOntology, owlFactory.getOWLDeclarationAxiom(owlObj));
-                        if (status == ChangeApplied.UNSUCCESSFULLY) {
-                            throw new Exception("Failed adding Object (" + status.toString() + "): " + obj.toString());
-                        }
+                        newAxioms.add(owlFactory.getOWLDeclarationAxiom(owlObj));
                         // Add object triple assertion
-                        status = ontManager.addAxiom(actOntology, owlFactory.getOWLObjectPropertyAssertionAxiom(owlPred, sub, owlObj));
-                        if (status == ChangeApplied.UNSUCCESSFULLY) {
-                            throw new Exception("Failed asserting triple (" + status.toString() + "): <" + stmt.getSubject().toString() + "," + pred.toString() + "," + obj.toString() + ">");
-                        }
+                        newAxioms.add(owlFactory.getOWLObjectPropertyAssertionAxiom(owlPred, sub, owlObj));
                     } else {
                         // Add predicate as DataProperty
                         OWLDataProperty owlPred = owlFactory.getOWLDataProperty(IRI.create(pred.getURI()));
-                        status = ontManager.addAxiom(actOntology, owlFactory.getOWLDeclarationAxiom(owlPred));
-                        if (status == ChangeApplied.UNSUCCESSFULLY) {
-                            throw new Exception("Failed adding DataProperty (" + status.toString() + "): " + pred.toString());
-                        }
+                        newAxioms.add(owlFactory.getOWLDeclarationAxiom(owlPred));
                         // Add data triple assertion
-                        status = ontManager.addAxiom(actOntology, owlFactory.getOWLDataPropertyAssertionAxiom(owlPred, sub, owlFactory.getOWLLiteral(obj.toString())));
-                        if (status == ChangeApplied.UNSUCCESSFULLY) {
-                            throw new Exception("Failed asserting triple (" + status.toString() + "): <" + stmt.getSubject().toString() + "," + pred.toString() + "," + obj.toString() + ">");
-                        }
+                        newAxioms.add(owlFactory.getOWLDataPropertyAssertionAxiom(owlPred, sub, owlFactory.getOWLLiteral(obj.toString())));
                     }
+                }
+                // Need to add all at once or Protege can deadlock and throw exceptions.
+                // This is a BUG in Protege/OWLAPI !!
+                ChangeApplied status = ontManager.addAxioms(actOntology, newAxioms);
+                if (status == ChangeApplied.UNSUCCESSFULLY) {
+                    throw new Exception("Failed to add new axioms");
                 }
                 System.out.println("Successfully imported!");
                 return null;
