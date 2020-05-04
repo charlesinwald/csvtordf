@@ -86,7 +86,7 @@ when Protege is next launched.
 The generated RDF triples will be imported to the current Protege Ontology, creating new instances and properties as needed.
 
 ## JavaDocs <a name="javadocs"></a>
-> See API documentation [here](docs/index.html}
+> See API documentation [here](docs/index.html)
 
 ## Team <a name="team"></a>
 - [Cody D'Ambrosio](https://github.com/cjd218)
