@@ -171,20 +171,11 @@ public class CsvWizard extends Application {
             public void handle(ActionEvent e) {
                 csvHandler.clearModel(); // clear out any previous
                 csvHandler.setPrefix(prefixField.getText());
-	        Alert askForHelp = new Alert(AlertType.CONFIRMATION,
-				             "Would you like to launch setup helper?",
-					     ButtonType.YES, ButtonType.NO);
-	        askForHelp.setTitle("Ready To Convert");
-		Optional<ButtonType> result = askForHelp.showAndWait();
 		boolean setupFailed = false;
-		if (result.get() == ButtonType.YES) {
-		  if (!setupModelProperties()) {
-                    setupFailed = true;
-		    modelLoaded = false;
-                  }
-		} else {
-		  // Do nothing
-		}
+		if (!setupModelProperties()) {
+                  setupFailed = true;
+		  modelLoaded = false;
+                }
 		if (!setupFailed) {
                   modelLoaded = csvHandler.readInputFile(selectedFilePath, numberOfThreads);
 		}
@@ -424,14 +415,26 @@ public class CsvWizard extends Application {
                 return null;
             }
         };
+        Stage progStage = new Stage();
         ProgressBar pBar = new ProgressBar();
         pBar.setPrefSize(300, 24);
         pBar.progressProperty().bind(saveOntTask.progressProperty());
         Label progLabel = new Label("Processing: 0%\tETA:");
         progLabel.textProperty().bind(saveOntTask.messageProperty());
 	Button cancelButton = new Button("Cancel");
-        // TBD: Add a prompt to confirm cancellation?
-	cancelButton.setOnMouseClicked(event -> {saveOntTask.cancel();});
+	cancelButton.setOnMouseClicked(event -> {
+            progStage.setAlwaysOnTop(false);
+            Alert confirmCancel = new Alert(AlertType.CONFIRMATION,
+                                            "Are you sure you want to cancel import?",
+                                            ButtonType.YES, ButtonType.NO);
+            confirmCancel.setTitle("Cancel Import");
+            Optional<ButtonType> confirmRes = confirmCancel.showAndWait();
+            if (confirmRes.get() == ButtonType.YES) {
+                saveOntTask.cancel();
+            } else {
+                progStage.setAlwaysOnTop(true);
+            }
+        });
         VBox layout = new VBox(10);
         layout.getChildren().setAll(progLabel, pBar, cancelButton);
         layout.setPadding(new Insets(10));
@@ -441,7 +444,6 @@ public class CsvWizard extends Application {
                 "CsvWizard.css"
             ).toExternalForm()
         );
-        Stage progStage = new Stage();
         progStage.setTitle("Importing RDF Data");
         progStage.getIcons().add(iconImage);
     	progStage.setScene(new Scene(layout));
