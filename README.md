@@ -9,7 +9,6 @@ There is an abundance of widely available data sets across the web. Unfortunatel
 - [Protege](#protege)
   - [Build Plugin](#buildplugin)
   - [Plugin Features](#pluginfeatures)
-- [JavaDocs](#javadocs)
 - [Team](#team)
 
 ## Build <a name="build"></a>
@@ -84,9 +83,6 @@ when Protege is next launched.
 ![Tools GIF](images/tools.gif)
 
 The generated RDF triples will be imported to the current Protege Ontology, creating new instances and properties as needed.
-
-## JavaDocs <a name="javadocs"></a>
-> See API documentation [here](docs/index.html)
 
 ## Team <a name="team"></a>
 - [Cody D'Ambrosio](https://github.com/cjd218)
