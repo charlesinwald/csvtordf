@@ -17,12 +17,18 @@ There is an abundance of widely available data sets across the web. Unfortunatel
 
 A sample script `buildrun.sh` is provided. Alternatively, this can be built manually by:
 ```
-1. Setting CLASSPATH to include the lib/ directory and the src/ directory
-2. javac src/csvtordf/main/!(CsvPlugin).java
+1. Setting CLASSPATH to include the src/ directory and lib/*
+2. $ shopt -s extglob
+3. $ javac src/csvtordf/main/!(CsvPlugin).java
 ```
 
 ## Run <a name="run"></a>
-> If you are seeing this, there currently is no JAR file to run. Please build and run manually.
+Prebuilt package has been provided and tested with JRE8.
+- [csvtordf.jar](builds/csvtordf.jar)
+The application can be ran by:
+```
+java -jar csvtordf.jar
+```
 
 If building manually, the Application can be ran by:
 ```

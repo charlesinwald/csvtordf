@@ -1,12 +1,19 @@
 #!/bin/bash
 
-###################################
-#                                 #
-# Script to clean, build, and     #
-# run CsvToRdf application        #
-# in linux environment.           #
-#                                 #
-###################################
+#######################################
+#                                     #
+# Script to clean, build, and         #
+# run CsvToRdf application            #
+# in linux environment.               #
+#                                     #
+# NOTE: To build complete JAR         #
+# standalone file, use Ant:           #
+#  $ ant fatjar                       #
+# The build.xml file and manifest     #
+# is setup to build a standlone JAR   #
+# and place it in builds/             #
+#                                     #
+#######################################
 package="csvtordf"
 exe="${package}.main.CsvWizard"
 

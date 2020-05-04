@@ -81,3 +81,4 @@ Require-Bundle: org.eclipse.equinox.registry,
  org.protege.editor.owl,
  org.semanticweb.owl.owlapi
 Bundle-NativeCode: bin/combase.dll
+Main-Class: csvtordf.main.CsvWizard

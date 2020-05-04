@@ -322,11 +322,21 @@
      </fx:jar>
    </target>
 
+   <!-- BUILD STANDALONE APP -->
+   <target name = "fatjar" depends = "compile, copy.resources, use.existing.manifest, bundlor.manifest">
+     <jar jarfile = "builds/csvtordf.jar"
+          basedir = "${classes}" 
+          manifest = "${build}/manifest.mf">
+     <zipgroupfileset dir="${lib}" includes="*.jar">
+	     <exclude name="csvtordf*"/>
+     </zipgroupfileset>
+     </jar>
+   </target>
 
    <target name = "jar" depends = "compile, copy.resources, use.existing.manifest, bundlor.manifest">
-     <jar jarfile = "${build}/${plugin}.jar"
-          basedir = "${classes}" 
-          manifest = "${build}/manifest.mf"/>
+	   <jar jarfile = "${build}/${plugin}.jar"
+          basedir = "${classes}"
+          manifest = "${build}/manifest.mf" />
    </target>
 
    <target name = "install" depends = "jar">

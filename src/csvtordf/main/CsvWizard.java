@@ -220,11 +220,13 @@ public class CsvWizard extends Application {
                 fileChooser.getExtensionFilters().add(extFilter);
 
                 File selectedFile = fileChooser.showOpenDialog(null);
-                selectedFileName = selectedFile.getName().replaceFirst("[.][^.]+$", "");;
-                selectedFilePath = selectedFile.getPath();
-                System.out.println(selectedFilePath);
-                currentFile.setText("CSV File: " + selectedFilePath);
-                submit.setVisible(true);
+                if (selectedFile != null) {
+                  selectedFileName = selectedFile.getName().replaceFirst("[.][^.]+$", "");;
+                  selectedFilePath = selectedFile.getPath();
+                  System.out.println(selectedFilePath);
+                  currentFile.setText("CSV File: " + selectedFilePath);
+                  submit.setVisible(true);
+                }
             }
         });
 
