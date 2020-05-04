@@ -178,6 +178,14 @@
        <pathelement location="${equinox.registry}"/>
        <pathelement location="${owl.editor.jar}"/>
        <pathelement location="${owl.lib}"/>
+       <pathelement location="lib/junit/junit-jupiter-5.4.2.jar"/>
+       <pathelement location="lib/junit/junit-jupiter-api-5.4.2.jar"/>
+       <pathelement location="lib/junit/junit-jupiter-engine-5.4.2.jar"/>
+       <pathelement location="lib/junit/junit-jupiter-params-5.4.2.jar"/>
+       <pathelement location="lib/junit/junit-platform-commons-1.4.2.jar"/>
+       <pathelement location="lib/junit/junit-platform-console-standalone-1.6.1.jar"/>
+       <pathelement location="lib/junit/junit-platform-engine-1.4.2.jar"/>
+       <pathelement location="lib/junit/ant-junitlauncher-1.10.5.jar"/>
        <!-- 
             **** CHANGE ME ****
 
@@ -363,22 +371,67 @@
             </classpath>
         </java>
     </target>
+    <!-- ===================================================================  -->
+    <!-- TEST -->
+    <!-- ===================================================================  -->
+    <property name="test.build.dir" value="build/classes/csvtordf/test"/>
+    <property name="test.src.dir" value="src/csvtordf/test"/>
 
-    <target name="jtest">
-        <junitlauncher>
+    <path id="classpath.test">
+        <pathelement location="lib/junit/junit-jupiter-5.4.2.jar"/>
+        <pathelement location="lib/junit/junit-jupiter-api-5.4.2.jar"/>
+        <pathelement location="lib/junit/junit-jupiter-engine-5.4.2.jar"/>
+        <pathelement location="lib/junit/junit-jupiter-params-5.4.2.jar"/>
+        <pathelement location="lib/junit/junit-platform-commons-1.4.2.jar"/>
+        <pathelement location="lib/junit/junit-platform-console-standalone-1.6.1.jar"/>
+        <pathelement location="lib/junit/junit-platform-engine-1.4.2.jar"/>
+        <pathelement location="lib/junit/ant-junitlauncher-1.10.5.jar"/>
+    </path>
+    <target name="test-compile" depends="compile">
+        <mkdir dir="${test.build.dir}"/>
+        <javac srcdir="${test.src.dir}" destdir="${test.build.dir}" includeantruntime="false">
+            <classpath refid="project.classpath"/>
+        </javac>
+<!--        <javac srcdir = "${src}"-->
+<!--               destdir = "${test.build.dir}"-->
+<!--               debug="on"-->
+<!--               includeAntRuntime="false">-->
+<!--            <classpath refid = "project.classpath"/>-->
+<!--        </javac>-->
+    </target>
+
+    <target name="test" depends="test-compile">
+        <junit printsummary="on" haltonfailure="yes" fork="true">
             <classpath>
-		    <!-- the test classes themselves -->
-		    <pathelement path="${classes}/lib/junit/*"/>
-		    <pathelement path="${classes}/csvtordf/test/*"/>
-		    <pathelement path="${classes}/csvtordf/main/*"/>
+                <path refid="project.classpath"/>
+                <pathelement location="${test.build.dir}"/>
+
             </classpath>
-	    <testclasses outputdir=".">
-		    <fileset dir="${classes}/csvtordf/test/"/>
-                <listener type="legacy-brief" sendSysOut="true"/>
-                <listener type="legacy-xml" sendSysErr="true" sendSysOut="true"/>
-            </testclasses>
-        </junitlauncher>
-</target>
+            <formatter type="brief" usefile="false" />
+            <batchtest>
+                <fileset dir="${test.src.dir}" includes="**/*Test.java" />
+            </batchtest>
+        </junit>
+    </target>
+<!--    <target name="jtest">-->
+<!--        <path id='classpath'>-->
+<!--            <fileset dir="${classes}/lib/junit" includes="**/*.jar" />-->
+<!--        </path>-->
+<!--        <junitlauncher>-->
+
+<!--            <classpath>-->
+<!--                <pathelement path="${classes}/lib/junit/*"/>-->
+<!--                &lt;!&ndash; the test classes themselves &ndash;&gt;-->
+<!--		    <pathelement path="${classes}/csvtordf/test/*"/>-->
+<!--		    <pathelement path="${classes}/csvtordf/main/*"/>-->
+<!--            </classpath>-->
+<!--	    <testclasses outputdir=".">-->
+<!--		    <fileset dir="${classes}/csvtordf/test/"/>-->
+<!--                <listener type="legacy-brief" sendSysOut="true"/>-->
+<!--                <listener type="legacy-xml" sendSysErr="true" sendSysOut="true"/>-->
+<!--            </testclasses>-->
+<!--        </junitlauncher>-->
+<!--</target>-->
 
     <!-- ===================================================================  -->
     <!-- DEBUG -->

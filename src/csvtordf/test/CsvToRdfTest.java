@@ -1,37 +1,34 @@
-package csvtordf.test;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class CsvToRdfTest {
+
+public class CsvToRdfTest {
+
 
     @Test
-    void main() {
+    public void readInputFile() {
         assertEquals("welcome","welcome");
     }
 
     @Test
-    void readInputFile() {
+    public void initModel() {
     }
 
     @Test
-    void initModel() {
+    public void printModel() {
     }
 
     @Test
-    void printModel() {
+    public void outputModel() {
     }
 
     @Test
-    void outputModel() {
+    public void getLastExecTime() {
     }
 
     @Test
-    void getLastExecTime() {
-    }
-
-    @Test
-    void getLastErrorMsg() {
+    public void getLastErrorMsg() {
     }
 }
