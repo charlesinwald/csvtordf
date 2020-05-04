@@ -14,6 +14,7 @@ package csvtordf.main;
 // Java imports
 import java.io.*;
 import java.lang.reflect.Array;
+import java.lang.Exception;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.ArrayList;
@@ -44,7 +45,7 @@ import org.apache.commons.cli.*;
  * Execution class for parallel processing of CSV file
  *
  */
-class MultiThreadCsvProcessor implements Runnable {
+class MultiThreadCsvProcessor implements Callable<Void> {
   private final String[] lines;
   private final String prefix;
   private final int startNum, endNum;
@@ -63,13 +64,17 @@ class MultiThreadCsvProcessor implements Runnable {
     this.endNum = endNum;
   }
 
-  @Override
-  public void run() {
+  public Void call() throws Exception {
     int arrayLength = lines.length;
     // Do as much parsing outside the critical section as possible
     String[][] tokens = new String[arrayLength][];
     for (int i = startNum; i <= endNum; i++) {
       tokens[i % arrayLength] = lines[i % arrayLength].split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+      if (tokens[i % arrayLength].length < properties.size()) {
+        throw new Exception("Line " + (i+1) + " too short, should contain " + properties.size() + " fields");
+      } else if (tokens[i % arrayLength].length > properties.size()) {
+        throw new Exception("Line " + (i+1) + " too long, should contain " + properties.size() + " fields");
+      }
     }
 
     // Locks are expensive, but tested with having each thread maintain its own model and merge at the end,
@@ -92,6 +97,7 @@ class MultiThreadCsvProcessor implements Runnable {
     } finally {
       model.leaveCriticalSection();
     }
+    return null;
   }
 }
 
@@ -217,26 +223,31 @@ public class CsvToRdf extends Object {
       // Pass off batch of lines to thread in pool
       int num = 0;
       String[] linesArray = new String[BATCH_SIZE];
+      ArrayList<Future> jobResults = new ArrayList<>();
       while ((line = br.readLine()) != null) {
         linesArray[num % BATCH_SIZE] = line;
-	num++;
-	if (num % BATCH_SIZE == 0) {
-	  service.execute(new MultiThreadCsvProcessor(model, prefix, properties, skipProps,
-				                      linesArray, num - BATCH_SIZE, num - 1));
-	}
+        num++;
+        if (num % BATCH_SIZE == 0) {
+          jobResults.add(service.submit(
+              new MultiThreadCsvProcessor(model, prefix, properties, skipProps,
+                                          linesArray, num - BATCH_SIZE, num - 1)));
+        }
       }
       // Launch any remaining
       if (num % BATCH_SIZE != 0) {
-        service.execute(new MultiThreadCsvProcessor(model, prefix, properties, skipProps,
-				                    linesArray, (num / BATCH_SIZE) * BATCH_SIZE, num - 1));
+        jobResults.add(service.submit(
+            new MultiThreadCsvProcessor(model, prefix, properties, skipProps,
+                                        linesArray, (num / BATCH_SIZE) * BATCH_SIZE, num - 1)));
       }
-
       // Wait for completion
       service.shutdown();
       service.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-
       br.close();
-
+      // Check if any failed
+      for (Future jobResult : jobResults) {
+        jobResult.get(); // will throw exception if job threw exception
+      }
+ 
       // stop timer and log
       long endTime = System.nanoTime();
       lastExecTime = (endTime - startTime) / 1000000; // milliseconds

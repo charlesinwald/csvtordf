@@ -188,6 +188,12 @@ public class CsvWizard extends Application {
 		  errorAlert.setHeaderText("CSV conversion error");
 		  errorAlert.setContentText(csvHandler.getLastErrorMsg());
 		  errorAlert.showAndWait();
+                  // CSVToRDF Model is now empty, don't display the previous one as it
+                  // can no longer be imported/saved
+                  csvHandler.clearModel(); // Just in case anything got partially loaded.
+                  saveButton.setVisible(false);
+                  scrollPane.setVisible(false);
+                  execTimeLabel.setVisible(false);
                 }
             }
         });
