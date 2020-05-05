@@ -40,6 +40,7 @@ import javafx.application.Application;
 import org.apache.jena.base.Sys;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.shared.*;
+import org.apache.jena.datatypes.xsd.*;
 
 // CLI parsing
 import org.apache.commons.cli.*;
@@ -130,6 +131,9 @@ public class CsvToRdf extends Object {
   private Set<Property> skipProps = new HashSet<Property>();
   private String prefix = "http://example.org/csv#";
 
+  // Used for augmenting metadata
+  private ArrayList<XSDDatatype> datatypes = new ArrayList<>();
+
   // Set once model is loaded the first time
   private boolean initialized = false;
 
@@ -157,18 +161,21 @@ public class CsvToRdf extends Object {
     options.addOption(new Option("o", "output", true, "Output RDF XML file (default: STDOUT)"));
     options.addOption(new Option("t", "threads", true, "Number of threads (default: 1)"));
     options.addOption(new Option("v", "verbosity", true, "Verbose logging level"));
+    options.addOption(new Option("a", "augment", true, "Metadata file for augmented CSV to RDF conversion"));
     HelpFormatter formatter = new HelpFormatter();
 
     // Parse arguments
     String csvfile = "";
     int threads = 1;
     String output = "STDOUT"; // technically disallows a user creating a file named "STDOUT"
+    String metadata = null;
     CommandLineParser parser = new DefaultParser();
     try {
       CommandLine line = parser.parse(options, args);
       if(line.hasOption("v")) g_verbosity = Integer.parseInt(line.getOptionValue("v"));
       if(line.hasOption("o")) output = line.getOptionValue("o");
       if(line.hasOption("t")) threads = Integer.parseInt(line.getOptionValue("t"));
+      if(line.hasOption("a")) metadata = line.getOptionValue("a");
       csvfile = line.getOptionValue("c");
     } catch(NumberFormatException e) {
       System.err.println("Non-Integer Found! " + e.getMessage());
@@ -192,11 +199,20 @@ public class CsvToRdf extends Object {
     System.out.println("  Threads     : " + threads);
     System.out.println("  CSV File    : " + csvfile);
     System.out.println("  Output File : " + output);
+    if (metadata != null) {
+      System.out.println("  Metadata File : " + metadata);
+    }
     System.out.println("");
+
+    // Process any provided augmentation metadata
+    CsvToRdf csvHandler = new CsvToRdf();
+    if (metadata != null) {
+      System.out.println("Reading in metadata...");
+      if (!csvHandler.readMetadataFile(metadata));
+    }
 
     // Will load Jena Model
     System.out.println("Reading in CSV file...");
-    CsvToRdf csvHandler = new CsvToRdf();
     if (!csvHandler.readInputFile(csvfile, threads)) {
       System.exit(1);
     }
@@ -207,6 +223,43 @@ public class CsvToRdf extends Object {
 
     System.out.println("");
     System.out.println("Done!");
+  }
+
+  /**
+   * Read in a CSV metadata file
+   *
+   * @param inputFilePath Path to CSV metadata file relative to working directory
+   *
+   * @return boolean - true if successful, false otherwise
+   */
+  public boolean readMetadataFile(String inputFilePath) {
+    try {
+      FileInputStream fIn = new FileInputStream(inputFilePath);
+      BufferedReader br = new BufferedReader(new InputStreamReader(fIn));
+
+      String line = br.readLine();
+      String[] tokens = line.split(",");
+
+      for (String tok : tokens) {
+        XSDDatatype datatype = new XSDDatatype(tok);
+        datatypes.add(datatype);
+      }
+
+      return true;
+    } catch (FileNotFoundException e) {
+      lastErrorMsg = "File not found: " + inputFilePath;
+      System.err.println(lastErrorMsg);
+      return false;
+    } catch (IOException e) {
+      lastErrorMsg = e.getMessage();
+      System.err.println(lastErrorMsg);
+      return false;
+    } catch (Exception e) {
+      // some unknown error, don't crash
+      lastErrorMsg = e.getMessage();
+      System.err.println(lastErrorMsg);
+      return false;
+    }
   }
 
   /**
