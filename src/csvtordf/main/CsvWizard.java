@@ -547,9 +547,14 @@ public class CsvWizard extends Application {
       // TODO: maybe make this pane a grid? these labels don't line up right
       HBox labelHbox = new HBox(new Label("Skip"), new Label("Literal"), new Label("Resource"),
                                 new Label("Property"), new Label("Type"));
+      GridPane labelPane = new GridPane();
+      HBox markPropertyPane = new HBox(new Label("Skip "), new Label(" Literal "), new Label(" Resource"));
+      HBox propertyPane = new HBox(new Label("\t\t\t\t\t\t"), new Label("Property"), new Label("\t\t\t\t\t\t\t\t\t"), new Label("Type"));
+      labelPane.add(markPropertyPane, 0,0,1,1);
+      labelPane.add(propertyPane,1,0,1,1);
       labelHbox.setSpacing(20);
       labelHbox.setPadding(new Insets(10));
-      scrollVbox.getChildren().add(labelHbox);
+      scrollVbox.getChildren().add(labelPane);
       ArrayList<ToggleGroup> toggleGroupList = new ArrayList<>();
       ArrayList<TextField> textFieldList = new ArrayList<>();
       ArrayList<Property> properties = csvHandler.getProperties();
