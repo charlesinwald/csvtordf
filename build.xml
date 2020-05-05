@@ -374,8 +374,8 @@
     <!-- ===================================================================  -->
     <!-- TEST -->
     <!-- ===================================================================  -->
-    <property name="test.build.dir" value="build/classes/csvtordf/test"/>
-    <property name="test.src.dir" value="src/csvtordf/test"/>
+    <property name="test.build.dir" value="build/classes/"/>
+    <property name="test.src.dir" value="src/"/>
 
     <path id="classpath.test">
         <pathelement location="lib/junit/junit-jupiter-5.4.2.jar"/>
@@ -392,12 +392,12 @@
         <javac srcdir="${test.src.dir}" destdir="${test.build.dir}" includeantruntime="false">
             <classpath refid="project.classpath"/>
         </javac>
-<!--        <javac srcdir = "${src}"-->
-<!--               destdir = "${test.build.dir}"-->
-<!--               debug="on"-->
-<!--               includeAntRuntime="false">-->
-<!--            <classpath refid = "project.classpath"/>-->
-<!--        </javac>-->
+        <javac srcdir = "${src}"
+               destdir = "${test.build.dir}"
+               debug="on"
+               includeAntRuntime="false">
+            <classpath refid = "project.classpath"/>
+        </javac>
     </target>
 
     <target name="test" depends="test-compile">
@@ -405,7 +405,6 @@
             <classpath>
                 <path refid="project.classpath"/>
                 <pathelement location="${test.build.dir}"/>
-
             </classpath>
             <formatter type="brief" usefile="false" />
             <batchtest>
