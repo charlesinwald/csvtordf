@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class CsvToRdfTest {
 
+    /* Basic functionality */
+
     @Test
     public void main() {
         System.out.println("Test");
@@ -75,4 +77,33 @@ public class CsvToRdfTest {
     @Test
     public void getLastErrorMsg() {
     }
+
+    /* Tests relating to our "stretch goal" features */
+
+    @Test
+    public void initModelWithMaliciousInput() {
+
+    }
+
+    @Test
+    public void readAugmentationMetadata() {
+
+    }
+
+    @Test
+    public void initModelUsingMetadata() {
+
+    }
+
+    @Test
+    public void loadOntology() {
+
+    }
+
+    @Test
+    public void initModelUsingOntologyMetadata() {
+
+    }
+
+
 }
