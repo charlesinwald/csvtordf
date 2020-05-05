@@ -1,7 +1,10 @@
 package csvtordf.test;
 
+import org.apache.jena.base.Sys;
 import org.junit.Test;
 import csvtordf.main.CsvToRdf;
+
+import java.lang.reflect.Field;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -11,7 +14,6 @@ public class CsvToRdfTest {
     public void main() {
         System.out.println("Test");
         CsvToRdf program = new CsvToRdf();
-
     }
 
     @Test
@@ -34,6 +36,9 @@ public class CsvToRdfTest {
 
     @Test
     public void initModel() {
+        CsvToRdf program = new CsvToRdf();
+        program.initModel(new String[]{"header1","header2"});
+        assertNotNull(program.getModel());
     }
 
     @Test
