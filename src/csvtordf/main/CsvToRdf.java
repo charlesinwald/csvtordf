@@ -52,6 +52,17 @@ import org.apache.commons.cli.*;
 //      or the model will need to be cleared and the new file
 //      will be its own model.
 
+class PropertyMetadata {
+  public final boolean isLiteral;
+  public final XSDDatatype literalType;
+  public final String objectURI;
+  public PropertyMetadata (boolean isLiteral, XSDDatatype literalType, String objectURI) {
+    this.isLiteral = isLiteral;
+    this.literalType = literalType;
+    this.objectURI = objectURI;
+  }
+}
+
 /**
  *
  * Execution class for parallel processing of CSV file
@@ -64,13 +75,15 @@ class MultiThreadCsvProcessor implements Callable<Void> {
   private Model model;
   private final ArrayList<Property> properties;
   private final Set<Property> skipProps;
+  private final ArrayList<PropertyMetadata> datatypes;
 
-  public MultiThreadCsvProcessor(Model model, String prefix, ArrayList<Property> properties, Set<Property> skipProps,
+  public MultiThreadCsvProcessor(Model model, String prefix, ArrayList<Property> properties, Set<Property> skipProps, ArrayList<PropertyMetadata> datatypes,
 		                 String[] lines, int startNum, int endNum) {
     this.model = model;
     this.prefix = prefix;
     this.properties = properties;
     this.skipProps = skipProps;
+    this.datatypes = datatypes;
     this.lines = lines;
     this.startNum = startNum;
     this.endNum = endNum;
@@ -102,7 +115,13 @@ class MultiThreadCsvProcessor implements Callable<Void> {
           //cell is the object
           Property property = properties.get(j);
           if (!skipProps.contains(property)) {
-            instance.addProperty(property, tokens[i % arrayLength][j]);
+            PropertyMetadata meta = datatypes.get(j);
+            if (meta.isLiteral) {
+              Literal l = model.createTypedLiteral(tokens[i % arrayLength][j], meta.literalType);
+              instance.addProperty(property, l);
+            } else {
+              instance.addProperty(property, tokens[i % arrayLength][j]);
+            }
           }
         }
       }
@@ -132,7 +151,8 @@ public class CsvToRdf extends Object {
   private String prefix = "http://example.org/csv#";
 
   // Used for augmenting metadata
-  private ArrayList<XSDDatatype> datatypes = new ArrayList<>();
+//  private ArrayList<XSDDatatype> datatypes = new ArrayList<>();
+  private ArrayList<PropertyMetadata> datatypes = new ArrayList<>();
 
   // Set once model is loaded the first time
   private boolean initialized = false;
@@ -242,7 +262,8 @@ public class CsvToRdf extends Object {
 
       for (String tok : tokens) {
         XSDDatatype datatype = new XSDDatatype(tok);
-        datatypes.add(datatype);
+        PropertyMetadata meta = new PropertyMetadata(true, datatype, null);
+        datatypes.add(meta);
       }
 
       return true;
@@ -259,6 +280,17 @@ public class CsvToRdf extends Object {
       lastErrorMsg = e.getMessage();
       System.err.println(lastErrorMsg);
       return false;
+    }
+  }
+
+  public void setDatatypesFromWizard(boolean isLiteral, String uri) {
+    if (isLiteral) {
+      XSDDatatype type = new XSDDatatype(uri);
+      PropertyMetadata meta = new PropertyMetadata(true, type, null);
+      datatypes.add(meta);
+    } else {
+      PropertyMetadata meta = new PropertyMetadata(false, null, uri);
+      datatypes.add(meta);
     }
   }
 
@@ -300,14 +332,14 @@ public class CsvToRdf extends Object {
         num++;
         if (num % BATCH_SIZE == 0) {
           jobResults.add(service.submit(
-              new MultiThreadCsvProcessor(model, prefix, properties, skipProps,
+              new MultiThreadCsvProcessor(model, prefix, properties, skipProps, datatypes,
                                           linesArray, num - BATCH_SIZE, num - 1)));
         }
       }
       // Launch any remaining
       if (num % BATCH_SIZE != 0) {
         jobResults.add(service.submit(
-            new MultiThreadCsvProcessor(model, prefix, properties, skipProps,
+            new MultiThreadCsvProcessor(model, prefix, properties, skipProps, datatypes,
                                         linesArray, (num / BATCH_SIZE) * BATCH_SIZE, num - 1)));
       }
       // Wait for completion
