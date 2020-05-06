@@ -551,19 +551,14 @@ public class CsvWizard extends Application {
       Stage setupStage = new Stage();
       setupStage.setTitle("Setting Up RDF Model");
       VBox scrollVbox = new VBox();
-      // TODO: maybe make this pane a grid? these labels don't line up right
-      HBox labelHbox = new HBox(new Label("Skip"), new Label("Literal"), new Label("Resource"),
-                                new Label("Property"), new Label("Type"));
       GridPane labelPane = new GridPane();
       HBox markPropertyPane = new HBox(new Label("Skip "), new Label(" Literal "), new Label(" Resource"));
       HBox propertyPane = new HBox(new Label("\t\t\t\t\t\t"), new Label("Property"), new Label("\t\t\t\t\t\t\t\t\t"), new Label("Type"));
       labelPane.add(markPropertyPane, 0,0,1,1);
       labelPane.add(propertyPane,1,0,1,1);
-      labelHbox.setSpacing(20);
-      labelHbox.setPadding(new Insets(10));
       scrollVbox.getChildren().add(labelPane);
       ArrayList<ToggleGroup> toggleGroupList = new ArrayList<>();
-      ArrayList<ComboBox> textFieldList = new ArrayList<>();
+      ArrayList<ComboBox<String>> textFieldList = new ArrayList<>();
       ArrayList<Property> properties = csvHandler.getProperties();
       for (Property property : properties) {
         // Add row for each property
@@ -579,7 +574,8 @@ public class CsvWizard extends Application {
         r2.setToggleGroup(tg);
         r3.setToggleGroup(tg);
         toggleGroupList.add(tg);
-        ComboBox cb = new ComboBox(FXCollections.observableArrayList(xsd));
+        ComboBox<String> cb = new ComboBox<String>();
+        cb.getItems().addAll(xsd);
         cb.setEditable(true);
         cb.setPromptText("literal type...");
 
