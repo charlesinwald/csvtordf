@@ -1,15 +1,19 @@
 package csvtordf.test;
 
 import org.apache.jena.base.Sys;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.junit.Test;
 import csvtordf.main.CsvToRdf;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Scanner;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -48,10 +52,70 @@ public class CsvToRdfTest {
         assertNotNull(program.getModel());
     }
 
+    /**
+     * Tests that a) unmarked properties don't skip b) marked properties skip c) clear model ensures that the markings
+     * are reset when the model is cleared
+     */
     @Test
     public void markSkipped() {
         CsvToRdf program = new CsvToRdf();
-        program.initModel(new String[]{"header1","header2"});
+        //First we want to read it in without marking it to skip so we can ensure unskipped properties aren't skipped
+        int processors = Runtime.getRuntime().availableProcessors();
+        program.readInputFile("samples/sample.csv", processors);
+        ArrayList<Property> properties = program.getProperties();
+        Property propertyToSkip = properties.get(1);
+        System.err.println(propertyToSkip);
+
+        File file = new File("testOutputFile");
+        try {
+            boolean result = Files.deleteIfExists(file.toPath());
+        } catch (IOException e) {
+        }
+        assertFalse(Files.exists(Paths.get("testOutputFile")));
+        program.outputModel("testOutputFile");
+        assertTrue(Files.exists(Paths.get("testOutputFile")));
+        final Scanner scanner;
+        boolean containsProperty = false;
+        try {
+            scanner = new Scanner(file);
+            while (scanner.hasNextLine()) {
+                final String lineFromFile = scanner.nextLine();
+                if(lineFromFile.contains("Code")) {
+                    containsProperty = true;
+                    break;
+                }
+            }
+            //Assert that unskipped properties weren't skipped
+            assertTrue(containsProperty);
+        } catch (FileNotFoundException e) {
+            fail();
+        }
+        program.clearModel();
+        //Then we want to make sure markSkipped actually skips
+        program.markSkipped(propertyToSkip);
+        program.readInputFile("samples/sample.csv", processors);
+        try {
+            boolean result = Files.deleteIfExists(file.toPath());
+        } catch (IOException e) {
+        }
+        assertFalse(Files.exists(Paths.get("testOutputFile")));
+        program.outputModel("testOutputFile");
+        assertTrue(Files.exists(Paths.get("testOutputFile")));
+        containsProperty = false;
+        try {
+            final Scanner scanner2 = new Scanner(file);
+            while (scanner2.hasNextLine()) {
+                final String lineFromFile = scanner2.nextLine();
+                if(lineFromFile.contains("Code")) {
+                    containsProperty = false;
+                    break;
+                }
+            }
+            //Assert that unskipped properties were skipped
+            assertFalse(containsProperty);
+        } catch (FileNotFoundException e) {
+            fail();
+        }
 
     }
 
@@ -111,6 +175,7 @@ public class CsvToRdfTest {
 
     @Test
     public void getProperties() {
+
     }
 
     @Test
