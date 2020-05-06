@@ -38,7 +38,7 @@ rm -rf ${srcdir}/${package}/*/*.class
 # build
 echo "Building ${package}/*.java"
 shopt -s extglob
-javac ${srcdir}/${package}/main/!(CsvPlugin).java
+javac -Xlint:unchecked ${srcdir}/${package}/main/!(CsvPlugin).java
 res=$?
 if [ ${res} -ne 0 ]; then
     exit ${res}
