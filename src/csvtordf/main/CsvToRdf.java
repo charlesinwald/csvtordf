@@ -465,6 +465,7 @@ public class CsvToRdf extends Object {
   public void clearModel() {
     model = ModelFactory.createDefaultModel();
     properties = new ArrayList<>();
+    skipProps = new HashSet<Property>();
     initialized = false;
   }
 
