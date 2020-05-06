@@ -551,9 +551,6 @@ public class CsvWizard extends Application {
       Stage setupStage = new Stage();
       setupStage.setTitle("Setting Up RDF Model");
       VBox scrollVbox = new VBox();
-      // TODO: maybe make this pane a grid? these labels don't line up right
-      HBox labelHbox = new HBox(new Label("Skip"), new Label("Literal"), new Label("Resource"),
-                                new Label("Property"), new Label("Type"));
       GridPane labelPane = new GridPane();
       HBox markPropertyPane = new HBox(new Label("Skip "), new Label(" Literal "), new Label(" Resource"));
       HBox propertyPane = new HBox(new Label("\t\t\t\t\t\t"), new Label("Property"), new Label("\t\t\t\t\t\t\t\t\t"), new Label("Type"));
