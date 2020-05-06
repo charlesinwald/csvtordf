@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -57,31 +58,34 @@ public class CsvToRdfTest {
     @Test
     public void printModel() {
         CsvToRdf program = new CsvToRdf();
-        program.initModel(new String[]{"header1","header2"});
+        program.readInputFile("sample",1);
         program.printModel();
     }
 
     @Test
     public void outputModel() {
+        CsvToRdf program = new CsvToRdf();
+        program.readInputFile("sample",1);
+
         File file = new File("testOutputFile");
         try {
             boolean result = Files.deleteIfExists(file.toPath());
         } catch (IOException e) {
 
         }
+        assertFalse(Files.exists(Paths.get("testOutputFile")));
 
-        CsvToRdf program = new CsvToRdf();
-        program.readInputFile("sample",1);
+
         program.outputModel("STDOUT");
+        program.outputModel("testOutputFile");
+        assertTrue(Files.exists(Paths.get("testOutputFile")));
     }
 
     @Test
     public void clearModel() {
         CsvToRdf program = new CsvToRdf();
-        program.initModel(new String[]{"header1","header2"});
+        program.readInputFile("sample",1);
         assertNotNull(program.getModel());
-        Resource instance = program.getModel().createResource("res");
-        program.getModel().add(instance,program.getProperties().get(0),"x");
         StmtIterator iter = program.getModel().listStatements();
         assertTrue(iter.hasNext());
         program.clearModel();
@@ -91,14 +95,18 @@ public class CsvToRdfTest {
 
     @Test
     public void setPrefix() {
+        CsvToRdf program = new CsvToRdf();
+        program.readInputFile("sample",1);
+        program.setPrefix("test-prefix");
+        assertEquals(program.getPrefix(),"test-prefix");
     }
 
-    @Test
-    public void getPrefix() {
-    }
 
     @Test
     public void getModel() {
+        CsvToRdf program = new CsvToRdf();
+        program.readInputFile("sample",1);
+        assertNotNull(program.getModel());
     }
 
     @Test
