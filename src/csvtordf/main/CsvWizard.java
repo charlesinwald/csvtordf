@@ -556,8 +556,6 @@ public class CsvWizard extends Application {
       HBox propertyPane = new HBox(new Label("\t\t\t\t\t\t"), new Label("Property"), new Label("\t\t\t\t\t\t\t\t\t"), new Label("Type"));
       labelPane.add(markPropertyPane, 0,0,1,1);
       labelPane.add(propertyPane,1,0,1,1);
-      labelHbox.setSpacing(20);
-      labelHbox.setPadding(new Insets(10));
       scrollVbox.getChildren().add(labelPane);
       ArrayList<ToggleGroup> toggleGroupList = new ArrayList<>();
       ArrayList<ComboBox> textFieldList = new ArrayList<>();
