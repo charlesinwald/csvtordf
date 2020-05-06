@@ -556,7 +556,7 @@ public class CsvWizard extends Application {
       labelHbox.setPadding(new Insets(10));
       scrollVbox.getChildren().add(labelPane);
       ArrayList<ToggleGroup> toggleGroupList = new ArrayList<>();
-      ArrayList<TextField> textFieldList = new ArrayList<>();
+      ArrayList<ComboBox> textFieldList = new ArrayList<>();
       ArrayList<Property> properties = csvHandler.getProperties();
       for (Property property : properties) {
         // Add row for each property
@@ -572,10 +572,19 @@ public class CsvWizard extends Application {
         r2.setToggleGroup(tg);
         r3.setToggleGroup(tg);
         toggleGroupList.add(tg);
-        TextField tf = new TextField();
+        String xsd[] = {"float", "double", "int", "long", "short", "byte", "unsignedByte", "unsignedShort",
+            "unsignedInt", "unsignedLong", "decimal", "integer", "nonPositiveInteger",
+            "nonNegativeInteger", "positiveInteger", "negativeInteger", "Boolean", "string",
+            "normalizedString", "anyURI", "token", "Name", "QName", "language", "NMTOKEN", "ENTITIES",
+            "NMTOKENS", "ENTITY", "ID", "NCName", "IDREF", "IDREFS", "NOTATION", "hexBinary",
+            "base64Binary", "date", "time", "dateTime", "duration", "gDay", "gMonth", "gYear",
+            "gYearMonth", "gMonthDay:"};
+        ComboBox tf = new ComboBox(FXCollections.observableArrayList(xsd));
+        tf.setEditable(true);
         tf.setPromptText("literal type...");
+
         //tf.getParent().requestFocus();
-        tf.setPrefColumnCount(20);
+//        tf.setPrefColumnCount(20);
 	textFieldList.add(tf);
 
         // Set hint depending on which radio button is selected
@@ -592,8 +601,16 @@ public class CsvWizard extends Application {
             @Override
             public void changed(ObservableValue<? extends Boolean> obs, Boolean wasSel, Boolean isSel) {
                 if(isSel) {
-                  tf.setPromptText("literal type...");
-                  tf.setDisable(false);
+                    String xsd[] = {"float", "double", "int", "long", "short", "byte", "unsignedByte", "unsignedShort",
+                        "unsignedInt", "unsignedLong", "decimal", "integer", "nonPositiveInteger",
+                        "nonNegativeInteger", "positiveInteger", "negativeInteger", "Boolean", "string",
+                        "normalizedString", "anyURI", "token", "Name", "QName", "language", "NMTOKEN", "ENTITIES",
+                        "NMTOKENS", "ENTITY", "ID", "NCName", "IDREF", "IDREFS", "NOTATION", "hexBinary",
+                        "base64Binary", "date", "time", "dateTime", "duration", "gDay", "gMonth", "gYear",
+                        "gYearMonth", "gMonthDay:"};
+                    tf.getItems().addAll(xsd);
+                    tf.setPromptText("literal type...");
+                    tf.setDisable(false);
                 }
             }
         });
@@ -601,8 +618,9 @@ public class CsvWizard extends Application {
             @Override
             public void changed(ObservableValue<? extends Boolean> obs, Boolean wasSel, Boolean isSel) {
                 if(isSel) {
-                  tf.setPromptText("resource type...");
-                  tf.setDisable(false);
+                    tf.getItems().clear();
+                    tf.setPromptText("resource type...");
+                    tf.setDisable(false);
                 }
             }
         });
@@ -639,7 +657,7 @@ public class CsvWizard extends Application {
           int i = 0;
           for (Property property : properties) {
             String propData = toggleGroupList.get(i).getSelectedToggle().getUserData().toString();
-            String propType = textFieldList.get(i).getText();
+            String propType = textFieldList.get(i).getEditor().getText();
             if (propData.equals("Skip")) {
                 csvHandler.markSkipped(property);
             }
