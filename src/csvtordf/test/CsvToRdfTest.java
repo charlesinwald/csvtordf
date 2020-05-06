@@ -1,10 +1,14 @@
 package csvtordf.test;
 
 import org.apache.jena.base.Sys;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.junit.Test;
 import csvtordf.main.CsvToRdf;
-
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -45,18 +49,44 @@ public class CsvToRdfTest {
 
     @Test
     public void markSkipped() {
+        CsvToRdf program = new CsvToRdf();
+        program.initModel(new String[]{"header1","header2"});
+
     }
 
     @Test
     public void printModel() {
+        CsvToRdf program = new CsvToRdf();
+        program.initModel(new String[]{"header1","header2"});
+        program.printModel();
     }
 
     @Test
     public void outputModel() {
+        File file = new File("testOutputFile");
+        try {
+            boolean result = Files.deleteIfExists(file.toPath());
+        } catch (IOException e) {
+
+        }
+
+        CsvToRdf program = new CsvToRdf();
+        program.readInputFile("sample",1);
+        program.outputModel("STDOUT");
     }
 
     @Test
     public void clearModel() {
+        CsvToRdf program = new CsvToRdf();
+        program.initModel(new String[]{"header1","header2"});
+        assertNotNull(program.getModel());
+        Resource instance = program.getModel().createResource("res");
+        program.getModel().add(instance,program.getProperties().get(0),"x");
+        StmtIterator iter = program.getModel().listStatements();
+        assertTrue(iter.hasNext());
+        program.clearModel();
+        StmtIterator iter2 = program.getModel().listStatements();
+        assertFalse(iter2.hasNext());
     }
 
     @Test
