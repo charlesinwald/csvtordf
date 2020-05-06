@@ -70,6 +70,13 @@ import org.protege.editor.owl.ui.action.ProtegeOWLAction;
 public class CsvWizard extends Application {
 
     private static final String LEFT_PANE_TITLE = "Options";
+    private static final String xsd[] = {"float", "double", "int", "long", "short", "byte", "unsignedByte", "unsignedShort",
+            "unsignedInt", "unsignedLong", "decimal", "integer", "nonPositiveInteger",
+            "nonNegativeInteger", "positiveInteger", "negativeInteger", "Boolean", "string",
+            "normalizedString", "anyURI", "token", "Name", "QName", "language", "NMTOKEN", "ENTITIES",
+            "NMTOKENS", "ENTITY", "ID", "NCName", "IDREF", "IDREFS", "NOTATION", "hexBinary",
+            "base64Binary", "date", "time", "dateTime", "duration", "gDay", "gMonth", "gYear",
+            "gYearMonth", "gMonthDay:"};
     private static final int DEFAULT_NUMBER_OF_THREADS = 1;
     //The maximum amount of threads they should be able to run
     int processors = Runtime.getRuntime().availableProcessors();
@@ -572,28 +579,21 @@ public class CsvWizard extends Application {
         r2.setToggleGroup(tg);
         r3.setToggleGroup(tg);
         toggleGroupList.add(tg);
-        String xsd[] = {"float", "double", "int", "long", "short", "byte", "unsignedByte", "unsignedShort",
-            "unsignedInt", "unsignedLong", "decimal", "integer", "nonPositiveInteger",
-            "nonNegativeInteger", "positiveInteger", "negativeInteger", "Boolean", "string",
-            "normalizedString", "anyURI", "token", "Name", "QName", "language", "NMTOKEN", "ENTITIES",
-            "NMTOKENS", "ENTITY", "ID", "NCName", "IDREF", "IDREFS", "NOTATION", "hexBinary",
-            "base64Binary", "date", "time", "dateTime", "duration", "gDay", "gMonth", "gYear",
-            "gYearMonth", "gMonthDay:"};
-        ComboBox tf = new ComboBox(FXCollections.observableArrayList(xsd));
-        tf.setEditable(true);
-        tf.setPromptText("literal type...");
+        ComboBox cb = new ComboBox(FXCollections.observableArrayList(xsd));
+        cb.setEditable(true);
+        cb.setPromptText("literal type...");
 
         //tf.getParent().requestFocus();
 //        tf.setPrefColumnCount(20);
-	textFieldList.add(tf);
+	textFieldList.add(cb);
 
         // Set hint depending on which radio button is selected
    	r1.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> obs, Boolean wasSel, Boolean isSel) {
                 if(isSel) {
-                  tf.setPromptText("");
-                  tf.setDisable(true);
+                  cb.setPromptText("");
+                  cb.setDisable(true);
                 }
             }
         });
@@ -601,16 +601,9 @@ public class CsvWizard extends Application {
             @Override
             public void changed(ObservableValue<? extends Boolean> obs, Boolean wasSel, Boolean isSel) {
                 if(isSel) {
-                    String xsd[] = {"float", "double", "int", "long", "short", "byte", "unsignedByte", "unsignedShort",
-                        "unsignedInt", "unsignedLong", "decimal", "integer", "nonPositiveInteger",
-                        "nonNegativeInteger", "positiveInteger", "negativeInteger", "Boolean", "string",
-                        "normalizedString", "anyURI", "token", "Name", "QName", "language", "NMTOKEN", "ENTITIES",
-                        "NMTOKENS", "ENTITY", "ID", "NCName", "IDREF", "IDREFS", "NOTATION", "hexBinary",
-                        "base64Binary", "date", "time", "dateTime", "duration", "gDay", "gMonth", "gYear",
-                        "gYearMonth", "gMonthDay:"};
-                    tf.getItems().addAll(xsd);
-                    tf.setPromptText("literal type...");
-                    tf.setDisable(false);
+                    cb.getItems().addAll(xsd);
+                    cb.setPromptText("literal type...");
+                    cb.setDisable(false);
                 }
             }
         });
@@ -618,15 +611,15 @@ public class CsvWizard extends Application {
             @Override
             public void changed(ObservableValue<? extends Boolean> obs, Boolean wasSel, Boolean isSel) {
                 if(isSel) {
-                    tf.getItems().clear();
-                    tf.setPromptText("resource type...");
-                    tf.setDisable(false);
+                    cb.getItems().clear();
+                    cb.setPromptText("resource type...");
+                    cb.setDisable(false);
                 }
             }
         });
 
 
-        HBox propHbox = new HBox(r1, r2, r3, new Label(property.toString()), tf);
+        HBox propHbox = new HBox(r1, r2, r3, new Label(property.toString()), cb);
         propHbox.setSpacing(10);
         propHbox.setPadding(new Insets(10));
         scrollVbox.getChildren().add(propHbox);
