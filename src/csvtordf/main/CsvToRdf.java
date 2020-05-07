@@ -56,10 +56,12 @@ class PropertyMetadata {
   public final boolean isLiteral;
   public final XSDDatatype literalType;
   public final String objectURI;
+  public boolean isSkipped;
   public PropertyMetadata (boolean isLiteral, XSDDatatype literalType, String objectURI) {
     this.isLiteral = isLiteral;
     this.literalType = literalType;
     this.objectURI = objectURI;
+    this.isSkipped = false;
   }
 }
 
@@ -74,16 +76,14 @@ class MultiThreadCsvProcessor implements Callable<Void> {
   private final int startNum, endNum;
   private Model model;
   private final ArrayList<Property> properties;
-  private final Set<Property> skipProps;
-  private final ArrayList<PropertyMetadata> datatypes;
+  private final ArrayList<PropertyMetadata> propData;
 
-  public MultiThreadCsvProcessor(Model model, String prefix, ArrayList<Property> properties, Set<Property> skipProps, ArrayList<PropertyMetadata> datatypes,
+  public MultiThreadCsvProcessor(Model model, String prefix, ArrayList<Property> properties, ArrayList<PropertyMetadata> propData,
 		                 String[] lines, int startNum, int endNum) {
     this.model = model;
     this.prefix = prefix;
     this.properties = properties;
-    this.skipProps = skipProps;
-    this.datatypes = datatypes;
+    this.propData = propData;
     this.lines = lines;
     this.startNum = startNum;
     this.endNum = endNum;
@@ -114,8 +114,8 @@ class MultiThreadCsvProcessor implements Callable<Void> {
           //jth property is the predicate
           //cell is the object
           Property property = properties.get(j);
-          if (!skipProps.contains(property)) {
-            PropertyMetadata meta = datatypes.get(j);
+          PropertyMetadata meta = propData.get(j);
+          if (!meta.isSkipped) {
             if (meta.isLiteral) {
               Literal l = model.createTypedLiteral(tokens[i % arrayLength][j], meta.literalType);
               instance.addProperty(property, l);
@@ -147,12 +147,9 @@ public class CsvToRdf extends Object {
   // Jena model definitions
   private Model model;
   private ArrayList<Property> properties = new ArrayList<>();
+  private ArrayList<PropertyMetadata> propData = new ArrayList<>();
   private Set<Property> skipProps = new HashSet<Property>();
   private String prefix = "http://example.org/csv#";
-
-  // Used for augmenting metadata
-//  private ArrayList<XSDDatatype> datatypes = new ArrayList<>();
-  private ArrayList<PropertyMetadata> datatypes = new ArrayList<>();
 
   // Set once model is loaded the first time
   private boolean initialized = false;
@@ -224,8 +221,21 @@ public class CsvToRdf extends Object {
     }
     System.out.println("");
 
-    // Process any provided augmentation metadata
     CsvToRdf csvHandler = new CsvToRdf();
+
+    // Initialize model with headers
+    try {
+      FileInputStream fIn = new FileInputStream(csvfile);
+      BufferedReader br = new BufferedReader(new InputStreamReader(fIn));
+      String line = br.readLine(); // reads the first line, or nothing
+      String[] tokens = line.split(",");
+      csvHandler.initModel(tokens);
+    } catch(Exception e) {
+      System.err.println(e.getMessage());
+      System.exit(1);
+    }
+
+    // Process any provided augmentation metadata
     if (metadata != null) {
       System.out.println("Reading in metadata...");
       if (!csvHandler.readMetadataFile(metadata));
@@ -253,6 +263,7 @@ public class CsvToRdf extends Object {
    * @return boolean - true if successful, false otherwise
    */
   public boolean readMetadataFile(String inputFilePath) {
+    // FIXME: Verify metadata file is same length as CSV data file
     try {
       FileInputStream fIn = new FileInputStream(inputFilePath);
       BufferedReader br = new BufferedReader(new InputStreamReader(fIn));
@@ -260,10 +271,9 @@ public class CsvToRdf extends Object {
       String line = br.readLine();
       String[] tokens = line.split(",");
 
-      for (String tok : tokens) {
-        XSDDatatype datatype = new XSDDatatype(tok);
-        PropertyMetadata meta = new PropertyMetadata(true, datatype, null);
-        datatypes.add(meta);
+      for (int i=0; i < tokens.length; i++) {
+        XSDDatatype datatype = new XSDDatatype(tokens[i]);
+        propData.set(i, new PropertyMetadata(true, datatype, null));
       }
 
       return true;
@@ -283,14 +293,15 @@ public class CsvToRdf extends Object {
     }
   }
 
-  public void setDatatypesFromWizard(boolean isLiteral, String uri) {
-    if (isLiteral) {
-      XSDDatatype type = new XSDDatatype(uri);
-      PropertyMetadata meta = new PropertyMetadata(true, type, null);
-      datatypes.add(meta);
-    } else {
-      PropertyMetadata meta = new PropertyMetadata(false, null, uri);
-      datatypes.add(meta);
+  public void setDatatypes(Property property, boolean isLiteral, String uri) {
+    int idx = properties.indexOf(property);
+    if (idx >= 0) {
+      if (isLiteral) {
+        XSDDatatype type = new XSDDatatype(uri);
+        propData.set(idx, new PropertyMetadata(true, type, null));
+      } else {
+        propData.set(idx, new PropertyMetadata(false, null, uri));
+      }
     }
   }
 
@@ -332,14 +343,14 @@ public class CsvToRdf extends Object {
         num++;
         if (num % BATCH_SIZE == 0) {
           jobResults.add(service.submit(
-              new MultiThreadCsvProcessor(model, prefix, properties, skipProps, datatypes,
+              new MultiThreadCsvProcessor(model, prefix, properties, propData,
                                           linesArray, num - BATCH_SIZE, num - 1)));
         }
       }
       // Launch any remaining
       if (num % BATCH_SIZE != 0) {
         jobResults.add(service.submit(
-            new MultiThreadCsvProcessor(model, prefix, properties, skipProps, datatypes,
+            new MultiThreadCsvProcessor(model, prefix, properties, propData,
                                         linesArray, (num / BATCH_SIZE) * BATCH_SIZE, num - 1)));
       }
       // Wait for completion
@@ -395,6 +406,7 @@ public class CsvToRdf extends Object {
     for (String header : headers) {
       Property property = model.createProperty(prefix, cleanStr(header));
       properties.add(property);
+      propData.add(new PropertyMetadata(true, new XSDDatatype("string"), ""));
     }
 
     initialized = true;
@@ -408,7 +420,10 @@ public class CsvToRdf extends Object {
    *
    */
   public void markSkipped(Property property) {
-    skipProps.add(property);
+    int idx = properties.indexOf(property);
+    if (idx >= 0) {
+        propData.get(idx).isSkipped = true;
+    }
   }
 
   /**
@@ -497,7 +512,7 @@ public class CsvToRdf extends Object {
   public void clearModel() {
     model = ModelFactory.createDefaultModel();
     properties = new ArrayList<>();
-    skipProps = new HashSet<Property>();
+    propData = new ArrayList<>();
     initialized = false;
   }
 

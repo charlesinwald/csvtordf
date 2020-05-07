@@ -178,28 +178,32 @@ public class CsvWizard extends Application {
                 boolean setupFailed = false;
                 if (!setupModelProperties()) {
                     setupFailed = true;
-                    modelLoaded = false;
                 }
-                if (!setupFailed) {
-                    modelLoaded = csvHandler.readInputFile(selectedFilePath, numberOfThreads);
-                }
-                if (modelLoaded) {
-                    saveButton.setVisible(true);
-                    execTimeLabel.setText("Execution Time: " + csvHandler.getLastExecTime() + " ms");
-                    execTimeLabel.setVisible(true);
+                if (!setupFailed && !modelLoaded) {
+                    // setup was safely cancelled, but csvHandler previous model was still cleared.
+                    // need to clear screen.
                     viewModel();
+                    return;
+                } else if (!setupFailed) {
+                    // load rest of model
+                    modelLoaded = csvHandler.readInputFile(selectedFilePath, numberOfThreads);
                 } else {
+                    // error already displayed, clear screen and exit
+                    modelLoaded = false;
+                    viewModel();
+                    return;
+                }
+
+                if (!modelLoaded) {
+                    // reading rest of model failed
                     Alert errorAlert = new Alert(AlertType.ERROR);
                     errorAlert.setHeaderText("CSV conversion error");
                     errorAlert.setContentText(csvHandler.getLastErrorMsg());
                     errorAlert.showAndWait();
-                    // CSVToRDF Model is now empty, don't display the previous one as it
-                    // can no longer be imported/saved
-                    csvHandler.clearModel(); // Just in case anything got partially loaded.
-                    saveButton.setVisible(false);
-                    scrollPane.setVisible(false);
-                    execTimeLabel.setVisible(false);
                 }
+
+		// Will either display model or clear window
+                viewModel();
             }
         });
         submit.setVisible(false);
@@ -217,7 +221,6 @@ public class CsvWizard extends Application {
                 File selectedFile = fileChooser.showOpenDialog(null);
                 if (selectedFile != null) {
                     selectedFileName = selectedFile.getName().replaceFirst("[.][^.]+$", "");
-                    ;
                     selectedFilePath = selectedFile.getPath();
                     System.out.println(selectedFilePath);
                     currentFile.setText("CSV File: " + selectedFilePath);
@@ -486,7 +489,16 @@ public class CsvWizard extends Application {
             // Horizontal scroll bar is only displayed when needed
             scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
 
+            saveButton.setVisible(true);
+            execTimeLabel.setText("Execution Time: " + csvHandler.getLastExecTime() + " ms");
+            execTimeLabel.setVisible(true);
             scrollPane.setVisible(true);
+        } else {
+            // clear window
+            csvHandler.clearModel(); // Just in case anything got partially loaded.
+            saveButton.setVisible(false);
+            scrollPane.setVisible(false);
+            execTimeLabel.setVisible(false);
         }
     }
 
@@ -498,6 +510,8 @@ public class CsvWizard extends Application {
      */
     private boolean setupModelProperties() {
         System.out.println("SETTING UP MODEL");
+        modelLoaded = false;
+
         // Initialize model with header line from file
         String errMsg = null;
         try {
@@ -546,17 +560,16 @@ public class CsvWizard extends Application {
         //      so this is lower priority stretch goal.
         Stage setupStage = new Stage();
         setupStage.setTitle("Setting Up RDF Model");
-        VBox scrollVbox = new VBox();
-        GridPane labelPane = new GridPane();
-        HBox markPropertyPane = new HBox(new Label("Skip "), new Label(" Literal "), new Label(" Resource"));
-        HBox propertyPane = new HBox(new Label("\t\t\t\t\t\t"), new Label("Property"), new Label("\t\t\t\t\t\t\t\t\t"), new Label("Type"));
-        labelPane.add(markPropertyPane, 0, 0, 1, 1);
-        labelPane.add(propertyPane, 1, 0, 1, 1);
-        scrollVbox.getChildren().add(labelPane);
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(10, 10, 10, 10));
+        grid.addRow(0, new Label("Skip"), new Label("Literal"), new Label("Resource"), new Label("Property"), new Label("Type"));
         ArrayList<ToggleGroup> toggleGroupList = new ArrayList<>();
         ArrayList<ComboBox<String>> textFieldList = new ArrayList<>();
         ArrayList<Property> properties = csvHandler.getProperties();
-        for (Property property : properties) {
+        for (int i=0; i < properties.size(); i++){
+            Property property = properties.get(i);
             // Add row for each property
             ToggleGroup tg = new ToggleGroup();
             RadioButton r1 = new RadioButton();
@@ -606,17 +619,10 @@ public class CsvWizard extends Application {
                     }
                 }
             });
-
-
-            HBox propHbox = new HBox(r1, r2, r3, new Label(property.toString()), cb);
-            propHbox.setSpacing(10);
-            propHbox.setPadding(new Insets(10));
-            scrollVbox.getChildren().add(propHbox);
+            grid.addRow(i+1, r1, r2, r3, new Label(property.toString()), cb);
         }
-        scrollVbox.setSpacing(10);
-        scrollVbox.setPadding(new Insets(10));
         ScrollPane hScrollPane = new ScrollPane();
-        hScrollPane.setContent(scrollVbox);
+        hScrollPane.setContent(grid);
         hScrollPane.setPannable(true);
 
         VBox setupVbox = new VBox();
@@ -633,8 +639,8 @@ public class CsvWizard extends Application {
         setupVbox.getChildren().add(objLabel);
         setupVbox.getChildren().add(hScrollPane);
 
+        boolean fieldMissing = false;
         Button continueButton = new Button("Continue");
-        final boolean[] fieldsMissing = {false};
         continueButton.setOnMouseClicked(event -> {
                     // TODO: Save RDF Type to set for every CSV line
                     int i = 0;
@@ -645,20 +651,23 @@ public class CsvWizard extends Application {
                             csvHandler.markSkipped(property);
                         } else if (propData.equals("Literal")) {
                             if (!propType.isEmpty()) {
-                                csvHandler.setDatatypesFromWizard(true, propType);
-                            } else {
+                                csvHandler.setDatatypes(property, true, propType);
+                            } 
+                            /*
+			    else {
                                 Alert errorAlert = new Alert(AlertType.ERROR);
                                 errorAlert.setHeaderText("Please specify a type for property ");
                                 errorAlert.setContentText(property.getLocalName());
                                 errorAlert.showAndWait();
                                 System.err.println("propType missing");
-                                fieldsMissing[0] = true;
+                                fieldMissing = true;
                             }
+                            */
                         } else if (propData.equals("Resource")) {
                             createResourceWizard(property);
 
                         } else {
-                            csvHandler.setDatatypesFromWizard(false, propType);
+                            csvHandler.setDatatypes(property, false, propType);
                         }
                         // TODO: Handle setting Resource properties in CsvToRdf
                         System.out.println(property.toString() + " -> " + propData + " (" + propType + ")");
@@ -667,18 +676,28 @@ public class CsvWizard extends Application {
                     // If the user forgot to fill in fields we want to let them go back and add them rather than
                     // exiting the wizard
                     // TODO allow for successful conversion if they go back and fill in the fields
-                    if (!fieldsMissing[0]) {
+                    if (!fieldMissing) {
                         setupStage.close();
                     }
+                    modelLoaded = true;
                 }
         );
-
-        setupVbox.getChildren().add(continueButton);
+        Button cancelButton = new Button("Cancel");
+        cancelButton.setOnMouseClicked(event -> {
+            setupStage.close();
+        });
+        HBox buttonsHbox = new HBox(continueButton, cancelButton);
+        buttonsHbox.setSpacing(10);
+        setupVbox.getChildren().add(buttonsHbox);
         Scene setupScene = new Scene(setupVbox, 1024, 768);
         setupStage.setScene(setupScene);
         setupStage.getIcons().add(iconImage);
         setupStage.showAndWait();
-        System.out.println("FINISHED SETTING UP MODEL");
+        if(modelLoaded) {
+          System.out.println("FINISHED SETTING UP MODEL");
+        } else {
+          System.out.println("CANCELLED");
+        }
         return true;
     }
 
