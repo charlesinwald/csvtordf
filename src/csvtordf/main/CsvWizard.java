@@ -141,12 +141,10 @@ public class CsvWizard extends Application {
     }
 
     /**
-     *
      * Build top bar of GUI window, which is used to select the file to import.
      * This calls CsvToRdf on the button press to handle the conversion.
      *
      * @return HBox - Horizontal Box for top of GUI
-     *
      */
     private HBox buildTopBar() {
         Label l = new Label("Prefix:");
@@ -241,12 +239,10 @@ public class CsvWizard extends Application {
     }
 
     /**
-     *
      * Build left pane of GUI window, which is used to select the number of threads
      * and save the RDF generated.
      *
      * @return VBox - Vertical Box for left of GUI
-     *
      */
     private VBox buildLeftPane() {
         VBox leftPane = new VBox();
@@ -314,12 +310,10 @@ public class CsvWizard extends Application {
     }
 
     /**
-     *
      * Build center pane of GUI window, which is used for displaying a previous of the generated
      * RDF XML model.
      *
      * @return VBox - Vertical Box for center of GUI
-     *
      */
     private VBox buildCenterPane() {
         centerPane = new VBox();
@@ -338,9 +332,7 @@ public class CsvWizard extends Application {
     }
 
     /**
-     *
      * Save Jena model to OWL Ontology from Protege
-     *
      */
     private void saveToOntology() {
         OWLOntology actOntology = modelManager.getActiveOntology();
@@ -466,9 +458,7 @@ public class CsvWizard extends Application {
     }
 
     /**
-     *
      * Display the generated model in the center pane scroll window.
-     *
      */
     private void viewModel() {
         if (modelLoaded) {
@@ -501,12 +491,10 @@ public class CsvWizard extends Application {
     }
 
     /**
-     *
      * Open new window to guide user through setting up special
      * attributes of the model before importing every row in the CSV file.
      *
      * @return boolean - true if Model was setup properly, false otherwise.
-     *
      */
     private boolean setupModelProperties() {
         System.out.println("SETTING UP MODEL");
@@ -648,38 +636,41 @@ public class CsvWizard extends Application {
         Button continueButton = new Button("Continue");
         final boolean[] fieldsMissing = {false};
         continueButton.setOnMouseClicked(event -> {
-                // TODO: Save RDF Type to set for every CSV line
-                int i = 0;
-                for (Property property : properties) {
-                    String propData = toggleGroupList.get(i).getSelectedToggle().getUserData().toString();
-                    String propType = textFieldList.get(i).getEditor().getText();
-                    if (propData.equals("Skip")) {
-                        csvHandler.markSkipped(property);
-                    } else if (propData.equals("Literal")) {
-                        if (!propType.isEmpty()) {
-                            csvHandler.setDatatypesFromWizard(true, propType);
+                    // TODO: Save RDF Type to set for every CSV line
+                    int i = 0;
+                    for (Property property : properties) {
+                        String propData = toggleGroupList.get(i).getSelectedToggle().getUserData().toString();
+                        String propType = textFieldList.get(i).getEditor().getText();
+                        if (propData.equals("Skip")) {
+                            csvHandler.markSkipped(property);
+                        } else if (propData.equals("Literal")) {
+                            if (!propType.isEmpty()) {
+                                csvHandler.setDatatypesFromWizard(true, propType);
+                            } else {
+                                Alert errorAlert = new Alert(AlertType.ERROR);
+                                errorAlert.setHeaderText("Please specify a type for property ");
+                                errorAlert.setContentText(property.getLocalName());
+                                errorAlert.showAndWait();
+                                System.err.println("propType missing");
+                                fieldsMissing[0] = true;
+                            }
+                        } else if (propData.equals("Resource")) {
+                            createResourceWizard(property);
+
                         } else {
-                            Alert errorAlert = new Alert(AlertType.ERROR);
-                            errorAlert.setHeaderText("Please specify a type for property ");
-                            errorAlert.setContentText(property.getLocalName());
-                            errorAlert.showAndWait();
-                            System.err.println("propType missing");
-                            fieldsMissing[0] = true;
+                            csvHandler.setDatatypesFromWizard(false, propType);
                         }
-                    } else {
-                        csvHandler.setDatatypesFromWizard(false, propType);
+                        // TODO: Handle setting Resource properties in CsvToRdf
+                        System.out.println(property.toString() + " -> " + propData + " (" + propType + ")");
+                        i++;
                     }
-                    // TODO: Handle setting Resource properties in CsvToRdf
-                    System.out.println(property.toString() + " -> " + propData + " (" + propType + ")");
-                    i++;
+                    // If the user forgot to fill in fields we want to let them go back and add them rather than
+                    // exiting the wizard
+                    // TODO allow for successful conversion if they go back and fill in the fields
+                    if (!fieldsMissing[0]) {
+                        setupStage.close();
+                    }
                 }
-                // If the user forgot to fill in fields we want to let them go back and add them rather than
-                // exiting the wizard
-                // TODO allow for successful conversion if they go back and fill in the fields
-                if (!fieldsMissing[0]) {
-                    setupStage.close();
-                }
-            }
         );
 
         setupVbox.getChildren().add(continueButton);
@@ -689,6 +680,22 @@ public class CsvWizard extends Application {
         setupStage.showAndWait();
         System.out.println("FINISHED SETTING UP MODEL");
         return true;
+    }
+
+    /**
+     * Window for creating a new resource for a given property
+     * @param property property referring to this resource
+     */
+    //TODO finish this
+    private void createResourceWizard(Property property) {
+        Stage resourceWizardStage = new Stage();
+        resourceWizardStage.setTitle("Create New Resource");
+        VBox resourceWizardVBox = new VBox();
+        resourceWizardVBox.getChildren().add(new Label("URI: \n" + property.getLocalName()));
+        Scene resourceWizardScene = new Scene(resourceWizardVBox, 480, 360);
+        resourceWizardStage.setScene(resourceWizardScene);
+        resourceWizardStage.getIcons().add(iconImage);
+        resourceWizardStage.showAndWait();
     }
 }
 
