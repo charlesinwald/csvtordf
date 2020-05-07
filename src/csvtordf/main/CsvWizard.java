@@ -1,6 +1,7 @@
 /**
  * <h1>CsvWizard.java<h1>
  * <p>
+ *
  * @author Cody D'Ambrosio || cjd218 || cjd218@lehigh.edu
  * @author Charles Inwald  || cci219 || cci219@lehigh.edu
  * @author Paul Grocholske || pag314 || pag314@lehigh.edu
@@ -18,6 +19,7 @@
 package csvtordf.main;
 
 // Java imports
+
 import java.io.*;
 import java.util.concurrent.*;
 import java.util.*;
@@ -105,13 +107,13 @@ public class CsvWizard extends Application {
     public void start(Stage stage) {
         // Set if called as a plugin for Protege
         if (!runAsPlugin) {
-          Parameters params = getParameters();
-          List<String> list = params.getRaw();
-          if (list.size() > 0 && list.get(0).equals("plugin")) {
-            runAsPlugin = true;
-	    Platform.setImplicitExit(false);
-	  }
-	}
+            Parameters params = getParameters();
+            List<String> list = params.getRaw();
+            if (list.size() > 0 && list.get(0).equals("plugin")) {
+                runAsPlugin = true;
+                Platform.setImplicitExit(false);
+            }
+        }
 
 
         // Setup scene
@@ -161,10 +163,10 @@ public class CsvWizard extends Application {
         prefixField.setId("prefix-field");
         prefixField.setPrefColumnCount(30);
         if (runAsPlugin) {
-          // Use Protege IRI
-	  String iri = modelManager.getActiveOntology().getOntologyID().getOntologyIRI().get().toString() + "#";
-          prefixField.setText(iri);
-          prefixField.setDisable(true);
+            // Use Protege IRI
+            String iri = modelManager.getActiveOntology().getOntologyID().getOntologyIRI().get().toString() + "#";
+            prefixField.setText(iri);
+            prefixField.setDisable(true);
         }
 
         Button submit = new Button("Convert");
@@ -175,30 +177,30 @@ public class CsvWizard extends Application {
             public void handle(ActionEvent e) {
                 csvHandler.clearModel(); // clear out any previous
                 csvHandler.setPrefix(prefixField.getText());
-		boolean setupFailed = false;
-		if (!setupModelProperties()) {
-                  setupFailed = true;
-		  modelLoaded = false;
+                boolean setupFailed = false;
+                if (!setupModelProperties()) {
+                    setupFailed = true;
+                    modelLoaded = false;
                 }
-		if (!setupFailed) {
-                  modelLoaded = csvHandler.readInputFile(selectedFilePath, numberOfThreads);
-		}
+                if (!setupFailed) {
+                    modelLoaded = csvHandler.readInputFile(selectedFilePath, numberOfThreads);
+                }
                 if (modelLoaded) {
-                  saveButton.setVisible(true);
-		  execTimeLabel.setText("Execution Time: " + csvHandler.getLastExecTime() + " ms");
-		  execTimeLabel.setVisible(true);
-                  viewModel();
+                    saveButton.setVisible(true);
+                    execTimeLabel.setText("Execution Time: " + csvHandler.getLastExecTime() + " ms");
+                    execTimeLabel.setVisible(true);
+                    viewModel();
                 } else {
-                  Alert errorAlert = new Alert(AlertType.ERROR);
-		  errorAlert.setHeaderText("CSV conversion error");
-		  errorAlert.setContentText(csvHandler.getLastErrorMsg());
-		  errorAlert.showAndWait();
-                  // CSVToRDF Model is now empty, don't display the previous one as it
-                  // can no longer be imported/saved
-                  csvHandler.clearModel(); // Just in case anything got partially loaded.
-                  saveButton.setVisible(false);
-                  scrollPane.setVisible(false);
-                  execTimeLabel.setVisible(false);
+                    Alert errorAlert = new Alert(AlertType.ERROR);
+                    errorAlert.setHeaderText("CSV conversion error");
+                    errorAlert.setContentText(csvHandler.getLastErrorMsg());
+                    errorAlert.showAndWait();
+                    // CSVToRDF Model is now empty, don't display the previous one as it
+                    // can no longer be imported/saved
+                    csvHandler.clearModel(); // Just in case anything got partially loaded.
+                    saveButton.setVisible(false);
+                    scrollPane.setVisible(false);
+                    execTimeLabel.setVisible(false);
                 }
             }
         });
@@ -216,11 +218,12 @@ public class CsvWizard extends Application {
 
                 File selectedFile = fileChooser.showOpenDialog(null);
                 if (selectedFile != null) {
-                  selectedFileName = selectedFile.getName().replaceFirst("[.][^.]+$", "");;
-                  selectedFilePath = selectedFile.getPath();
-                  System.out.println(selectedFilePath);
-                  currentFile.setText("CSV File: " + selectedFilePath);
-                  submit.setVisible(true);
+                    selectedFileName = selectedFile.getName().replaceFirst("[.][^.]+$", "");
+                    ;
+                    selectedFilePath = selectedFile.getPath();
+                    System.out.println(selectedFilePath);
+                    currentFile.setText("CSV File: " + selectedFilePath);
+                    submit.setVisible(true);
                 }
             }
         });
@@ -289,7 +292,7 @@ public class CsvWizard extends Application {
                     FileChooser fileChooser = new FileChooser();
                     fileChooser.setTitle("Save " + selectedFileName + " as RDF");
                     //Specify we are saving RDF files here
-	            List<String> supportedExts = Arrays.asList("*.rdf", "*.xml", "*.owl");
+                    List<String> supportedExts = Arrays.asList("*.rdf", "*.xml", "*.owl");
                     FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("RDF files (*.rdf, *.xml, *.owl)", supportedExts);
                     fileChooser.getExtensionFilters().add(extFilter);
                     //Default name for file is the input file's name
@@ -303,7 +306,8 @@ public class CsvWizard extends Application {
                     }
                 }
             }
-        });;
+        });
+        ;
         leftPane.getChildren().add(saveButton);
 
         return leftPane;
@@ -325,7 +329,7 @@ public class CsvWizard extends Application {
 
         Label previewLabel = new Label("Preview:");
         previewLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-	centerPane.getChildren().add(previewLabel);
+        centerPane.getChildren().add(previewLabel);
 
         scrollPane.setVisible(false);
         centerPane.getChildren().add(scrollPane);
@@ -364,13 +368,13 @@ public class CsvWizard extends Application {
                     // update progress bar and message
                     i++;
                     if (i < numStmts) {
-                      updateMessage("Preparing: " + (int)(100 * (double)i/numStmts) + "% complete");
-		    } else {
-                      updateMessage("Importing...");
+                        updateMessage("Preparing: " + (int) (100 * (double) i / numStmts) + "% complete");
+                    } else {
+                        updateMessage("Importing...");
                     }
                     updateProgress(i, numStmts);
                     // This seems to reduce chance of deadlocking later...
-                    System.err.println("Adding statement (" + i + "/" + numStmts +"): <" + stmt.getSubject().toString() + ", " + stmt.getPredicate().toString() + ", " + stmt.getObject().toString() + ">");
+                    System.err.println("Adding statement (" + i + "/" + numStmts + "): <" + stmt.getSubject().toString() + ", " + stmt.getPredicate().toString() + ", " + stmt.getObject().toString() + ">");
 
                     // Add subject if not in Ontology
                     OWLNamedIndividual sub = owlFactory.getOWLNamedIndividual(IRI.create(stmt.getSubject().getURI()));
@@ -411,12 +415,12 @@ public class CsvWizard extends Application {
         pBar.progressProperty().bind(saveOntTask.progressProperty());
         Label progLabel = new Label("Processing: 0%\tETA:");
         progLabel.textProperty().bind(saveOntTask.messageProperty());
-	Button cancelButton = new Button("Cancel");
-	cancelButton.setOnMouseClicked(event -> {
+        Button cancelButton = new Button("Cancel");
+        cancelButton.setOnMouseClicked(event -> {
             progStage.setAlwaysOnTop(false);
             Alert confirmCancel = new Alert(AlertType.CONFIRMATION,
-                                            "Are you sure you want to cancel import?",
-                                            ButtonType.YES, ButtonType.NO);
+                    "Are you sure you want to cancel import?",
+                    ButtonType.YES, ButtonType.NO);
             confirmCancel.setTitle("Cancel Import");
             Optional<ButtonType> confirmRes = confirmCancel.showAndWait();
             if (confirmRes.get() == ButtonType.YES) {
@@ -430,17 +434,21 @@ public class CsvWizard extends Application {
         layout.setPadding(new Insets(10));
         layout.setAlignment(Pos.CENTER);
         layout.getStylesheets().add(
-            getClass().getResource(
-                "CsvWizard.css"
-            ).toExternalForm()
+                getClass().getResource(
+                        "CsvWizard.css"
+                ).toExternalForm()
         );
         progStage.setTitle("Importing RDF Data");
         progStage.getIcons().add(iconImage);
-    	progStage.setScene(new Scene(layout));
+        progStage.setScene(new Scene(layout));
         progStage.setAlwaysOnTop(true);
         progStage.setResizable(false);
-        saveOntTask.setOnSucceeded(event -> {progStage.close();});
-        saveOntTask.setOnCancelled(event -> {progStage.close();});
+        saveOntTask.setOnSucceeded(event -> {
+            progStage.close();
+        });
+        saveOntTask.setOnCancelled(event -> {
+            progStage.close();
+        });
         saveOntTask.setOnFailed(event -> {
             String errMsg = saveOntTask.getException().getMessage();
             System.err.println(errMsg);
@@ -466,15 +474,15 @@ public class CsvWizard extends Application {
         if (modelLoaded) {
             int lineLimit = 500;
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(128);
-	    System.err.println("Start writing");
+            System.err.println("Start writing");
             csvHandler.getModel().write(byteArrayOutputStream, "RDF/XML-ABBREV");
-	    System.err.println("End writing");
-	    // only output the first few lines if the file is too big
-	    String[] lines = byteArrayOutputStream.toString().split("\n");
-	    String[] linesSubset = Arrays.copyOfRange(lines, 0, Math.min(lines.length, lineLimit));
-	    String linesJoined = String.join("\n", linesSubset);
+            System.err.println("End writing");
+            // only output the first few lines if the file is too big
+            String[] lines = byteArrayOutputStream.toString().split("\n");
+            String[] linesSubset = Arrays.copyOfRange(lines, 0, Math.min(lines.length, lineLimit));
+            String linesJoined = String.join("\n", linesSubset);
             if (lines.length > lineLimit) {
-              linesJoined += "\n... truncated " + (lines.length - lineLimit) + " lines ...";
+                linesJoined += "\n... truncated " + (lines.length - lineLimit) + " lines ...";
             }
             Label rdfText = new Label(linesJoined);
             rdfText.setId("rdf-text");
@@ -501,170 +509,186 @@ public class CsvWizard extends Application {
      *
      */
     private boolean setupModelProperties() {
-      System.out.println("SETTING UP MODEL");
-      // Initialize model with header line from file
-      String errMsg = null;
-      try {
-        FileInputStream fIn = new FileInputStream(selectedFilePath);
-        BufferedReader br = new BufferedReader(new InputStreamReader(fIn));
-        String line = br.readLine(); // reads the first line, or nothing
-        String[] tokens = line.split(",");
-        csvHandler.initModel(tokens);
-      } catch (FileNotFoundException e) {
-        errMsg = "No such file: " + selectedFilePath;
-      } catch (IOException e) {
-	errMsg = "Failed reading file: " + selectedFilePath;
-      } catch (Exception e) {
-        errMsg = e.getMessage();
-      } finally {
-        if (errMsg != null) {
-          Alert errorAlert = new Alert(AlertType.ERROR);
-          errorAlert.setHeaderText("Initialization Error");
-          errorAlert.setContentText(errMsg);
-          errorAlert.showAndWait();
-          return false;
+        System.out.println("SETTING UP MODEL");
+        // Initialize model with header line from file
+        String errMsg = null;
+        try {
+            FileInputStream fIn = new FileInputStream(selectedFilePath);
+            BufferedReader br = new BufferedReader(new InputStreamReader(fIn));
+            String line = br.readLine(); // reads the first line, or nothing
+            String[] tokens = line.split(",");
+            csvHandler.initModel(tokens);
+        } catch (FileNotFoundException e) {
+            errMsg = "No such file: " + selectedFilePath;
+        } catch (IOException e) {
+            errMsg = "Failed reading file: " + selectedFilePath;
+        } catch (Exception e) {
+            errMsg = e.getMessage();
+        } finally {
+            if (errMsg != null) {
+                Alert errorAlert = new Alert(AlertType.ERROR);
+                errorAlert.setHeaderText("Initialization Error");
+                errorAlert.setContentText(errMsg);
+                errorAlert.showAndWait();
+                return false;
+            }
         }
-      }
 
-      // TODO: Set up rest of stage for augmenting data
-      // Setup options should include...
-      // RDF Type for each entry-
-      //    When run standalone, will create new resource for this type
-      //    When run through Protege, select from existing Ontology classes?
-      // Option to skip header
-      //    Perhaps there is a column that doesn't matter to the user, allow
-      //    option to not include it. The property will already have been
-      //    imported into CsvToRdf.model at this point though, will need to
-      //    somehow back it out.
-      // Data vs Object Property for each header
-      // If Data Property -
-      //    Prompt for type (string/int/date etc...)
-      // If Object Property -
-      //    Create as a new Resource
-      //      prompt for an RDF:type of that resource. Should also as the user
-      //      if they want to always create it, or reuse previously created.
-      //      i.e. if the property is "Country", and multiple rows contain
-      //      "France", it should be smart enough to reuse that same country.
-      //    Use previous row as Resource
-      //      This would require a lot of thought though to make it robust,
-      //      so this is lower priority stretch goal.
-      Stage setupStage = new Stage();
-      setupStage.setTitle("Setting Up RDF Model");
-      VBox scrollVbox = new VBox();
-      GridPane labelPane = new GridPane();
-      HBox markPropertyPane = new HBox(new Label("Skip "), new Label(" Literal "), new Label(" Resource"));
-      HBox propertyPane = new HBox(new Label("\t\t\t\t\t\t"), new Label("Property"), new Label("\t\t\t\t\t\t\t\t\t"), new Label("Type"));
-      labelPane.add(markPropertyPane, 0,0,1,1);
-      labelPane.add(propertyPane,1,0,1,1);
-      scrollVbox.getChildren().add(labelPane);
-      ArrayList<ToggleGroup> toggleGroupList = new ArrayList<>();
-      ArrayList<ComboBox<String>> textFieldList = new ArrayList<>();
-      ArrayList<Property> properties = csvHandler.getProperties();
-      for (Property property : properties) {
-        // Add row for each property
-        ToggleGroup tg = new ToggleGroup();
-        RadioButton r1 = new RadioButton();
-        r1.setUserData("Skip");
-        RadioButton r2 = new RadioButton();
-        r2.setUserData("Literal");
-        r2.setSelected(true);
-        RadioButton r3 = new RadioButton();
-        r3.setUserData("Resource");
-        r1.setToggleGroup(tg);
-        r2.setToggleGroup(tg);
-        r3.setToggleGroup(tg);
-        toggleGroupList.add(tg);
-        ComboBox<String> cb = new ComboBox<String>();
-        cb.getItems().addAll(xsd);
-        cb.setEditable(true);
-        cb.setPromptText("literal type...");
-	    textFieldList.add(cb);
+        // TODO: Set up rest of stage for augmenting data
+        // Setup options should include...
+        // RDF Type for each entry-
+        //    When run standalone, will create new resource for this type
+        //    When run through Protege, select from existing Ontology classes?
+        // Option to skip header
+        //    Perhaps there is a column that doesn't matter to the user, allow
+        //    option to not include it. The property will already have been
+        //    imported into CsvToRdf.model at this point though, will need to
+        //    somehow back it out.
+        // Data vs Object Property for each header
+        // If Data Property -
+        //    Prompt for type (string/int/date etc...)
+        // If Object Property -
+        //    Create as a new Resource
+        //      prompt for an RDF:type of that resource. Should also as the user
+        //      if they want to always create it, or reuse previously created.
+        //      i.e. if the property is "Country", and multiple rows contain
+        //      "France", it should be smart enough to reuse that same country.
+        //    Use previous row as Resource
+        //      This would require a lot of thought though to make it robust,
+        //      so this is lower priority stretch goal.
+        Stage setupStage = new Stage();
+        setupStage.setTitle("Setting Up RDF Model");
+        VBox scrollVbox = new VBox();
+        GridPane labelPane = new GridPane();
+        HBox markPropertyPane = new HBox(new Label("Skip "), new Label(" Literal "), new Label(" Resource"));
+        HBox propertyPane = new HBox(new Label("\t\t\t\t\t\t"), new Label("Property"), new Label("\t\t\t\t\t\t\t\t\t"), new Label("Type"));
+        labelPane.add(markPropertyPane, 0, 0, 1, 1);
+        labelPane.add(propertyPane, 1, 0, 1, 1);
+        scrollVbox.getChildren().add(labelPane);
+        ArrayList<ToggleGroup> toggleGroupList = new ArrayList<>();
+        ArrayList<ComboBox<String>> textFieldList = new ArrayList<>();
+        ArrayList<Property> properties = csvHandler.getProperties();
+        for (Property property : properties) {
+            // Add row for each property
+            ToggleGroup tg = new ToggleGroup();
+            RadioButton r1 = new RadioButton();
+            r1.setUserData("Skip");
+            RadioButton r2 = new RadioButton();
+            r2.setUserData("Literal");
+            r2.setSelected(true);
+            RadioButton r3 = new RadioButton();
+            r3.setUserData("Resource");
+            r1.setToggleGroup(tg);
+            r2.setToggleGroup(tg);
+            r3.setToggleGroup(tg);
+            toggleGroupList.add(tg);
+            ComboBox<String> cb = new ComboBox<String>();
+            cb.getItems().addAll(xsd);
+            cb.setEditable(true);
+            cb.setPromptText("literal type...");
+            textFieldList.add(cb);
 
-        // Set hint depending on which radio button is selected
-   	    r1.selectedProperty().addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> obs, Boolean wasSel, Boolean isSel) {
-                if(isSel) {
-                  cb.setPromptText("");
-                  cb.setDisable(true);
+            // Set hint depending on which radio button is selected
+            r1.selectedProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue<? extends Boolean> obs, Boolean wasSel, Boolean isSel) {
+                    if (isSel) {
+                        cb.setPromptText("");
+                        cb.setDisable(true);
+                    }
+                }
+            });
+            r2.selectedProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue<? extends Boolean> obs, Boolean wasSel, Boolean isSel) {
+                    if (isSel) {
+                        cb.getItems().addAll(xsd);
+                        cb.setPromptText("literal type...");
+                        cb.setDisable(false);
+                    }
+                }
+            });
+            r3.selectedProperty().addListener(new ChangeListener<Boolean>() {
+                @Override
+                public void changed(ObservableValue<? extends Boolean> obs, Boolean wasSel, Boolean isSel) {
+                    if (isSel) {
+                        cb.getItems().clear();
+                        cb.setPromptText("resource type...");
+                        cb.setDisable(false);
+                    }
+                }
+            });
+
+
+            HBox propHbox = new HBox(r1, r2, r3, new Label(property.toString()), cb);
+            propHbox.setSpacing(10);
+            propHbox.setPadding(new Insets(10));
+            scrollVbox.getChildren().add(propHbox);
+        }
+        scrollVbox.setSpacing(10);
+        scrollVbox.setPadding(new Insets(10));
+        ScrollPane hScrollPane = new ScrollPane();
+        hScrollPane.setContent(scrollVbox);
+        hScrollPane.setPannable(true);
+
+        VBox setupVbox = new VBox();
+        setupVbox.setSpacing(10);
+        setupVbox.setPadding(new Insets(10));
+
+        Label rdfTypeLabel = new Label("RDF Type:");
+        rdfTypeLabel.setPadding(new Insets(5, 5, 5, 5));
+        TextField rdfTypeField = new TextField();
+        rdfTypeField.setPrefColumnCount(30);
+        setupVbox.getChildren().add(new HBox(rdfTypeLabel, rdfTypeField));
+
+        Label objLabel = new Label("Select Object Properties:");
+        setupVbox.getChildren().add(objLabel);
+        setupVbox.getChildren().add(hScrollPane);
+
+        Button continueButton = new Button("Continue");
+        final boolean[] fieldsMissing = {false};
+        continueButton.setOnMouseClicked(event -> {
+                // TODO: Save RDF Type to set for every CSV line
+                int i = 0;
+                for (Property property : properties) {
+                    String propData = toggleGroupList.get(i).getSelectedToggle().getUserData().toString();
+                    String propType = textFieldList.get(i).getEditor().getText();
+                    if (propData.equals("Skip")) {
+                        csvHandler.markSkipped(property);
+                    } else if (propData.equals("Literal")) {
+                        if (!propType.isEmpty()) {
+                            csvHandler.setDatatypesFromWizard(true, propType);
+                        } else {
+                            Alert errorAlert = new Alert(AlertType.ERROR);
+                            errorAlert.setHeaderText("Please specify a type for property ");
+                            errorAlert.setContentText(property.getLocalName());
+                            errorAlert.showAndWait();
+                            System.err.println("propType missing");
+                            fieldsMissing[0] = true;
+                        }
+                    } else {
+                        csvHandler.setDatatypesFromWizard(false, propType);
+                    }
+                    // TODO: Handle setting Resource properties in CsvToRdf
+                    System.out.println(property.toString() + " -> " + propData + " (" + propType + ")");
+                    i++;
+                }
+                // If the user forgot to fill in fields we want to let them go back and add them rather than
+                // exiting the wizard
+                // TODO allow for successful conversion if they go back and fill in the fields
+                if (!fieldsMissing[0]) {
+                    setupStage.close();
                 }
             }
-        });
-        r2.selectedProperty().addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> obs, Boolean wasSel, Boolean isSel) {
-                if(isSel) {
-                    cb.getItems().addAll(xsd);
-                    cb.setPromptText("literal type...");
-                    cb.setDisable(false);
-                }
-            }
-        });
-        r3.selectedProperty().addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> obs, Boolean wasSel, Boolean isSel) {
-                if(isSel) {
-                    cb.getItems().clear();
-                    cb.setPromptText("resource type...");
-                    cb.setDisable(false);
-                }
-            }
-        });
+        );
 
-
-        HBox propHbox = new HBox(r1, r2, r3, new Label(property.toString()), cb);
-        propHbox.setSpacing(10);
-        propHbox.setPadding(new Insets(10));
-        scrollVbox.getChildren().add(propHbox);
-      }
-      scrollVbox.setSpacing(10);
-      scrollVbox.setPadding(new Insets(10));
-      ScrollPane hScrollPane = new ScrollPane();
-      hScrollPane.setContent(scrollVbox);
-      hScrollPane.setPannable(true);
-
-      VBox setupVbox = new VBox();
-      setupVbox.setSpacing(10);
-      setupVbox.setPadding(new Insets(10));
-
-      Label rdfTypeLabel = new Label("RDF Type:");
-      rdfTypeLabel.setPadding(new Insets(5, 5, 5, 5));
-      TextField rdfTypeField = new TextField();
-      rdfTypeField.setPrefColumnCount(30);
-      setupVbox.getChildren().add(new HBox(rdfTypeLabel, rdfTypeField));
-
-      Label objLabel = new Label("Select Object Properties:");
-      setupVbox.getChildren().add(objLabel);
-      setupVbox.getChildren().add(hScrollPane);
-
-      Button continueButton = new Button("Continue");
-      continueButton.setOnMouseClicked(event -> {
-          // TODO: Save RDF Type to set for every CSV line
-          int i = 0;
-          for (Property property : properties) {
-            String propData = toggleGroupList.get(i).getSelectedToggle().getUserData().toString();
-            String propType = textFieldList.get(i).getEditor().getText();
-            if (propData.equals("Skip")) {
-                csvHandler.markSkipped(property);
-            } else if (propData.equals("Literal")) {
-                csvHandler.setDatatypesFromWizard(true, propType);
-            } else {
-                csvHandler.setDatatypesFromWizard(false, propType);
-            }
-            // TODO: Handle setting Resource properties in CsvToRdf
-            System.out.println(property.toString() + " -> " + propData + " (" + propType + ")");
-            i++;
-          }
-          setupStage.close();
-      });
-
-      setupVbox.getChildren().add(continueButton);
-      Scene setupScene = new Scene(setupVbox, 1024, 768);
-      setupStage.setScene(setupScene);
-      setupStage.getIcons().add(iconImage);
-      setupStage.showAndWait();
-      System.out.println("FINISHED SETTING UP MODEL");
-      return true;
+        setupVbox.getChildren().add(continueButton);
+        Scene setupScene = new Scene(setupVbox, 1024, 768);
+        setupStage.setScene(setupScene);
+        setupStage.getIcons().add(iconImage);
+        setupStage.showAndWait();
+        System.out.println("FINISHED SETTING UP MODEL");
+        return true;
     }
 }
 
