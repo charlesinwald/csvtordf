@@ -525,6 +525,9 @@ public class CsvWizard extends Application {
             FileInputStream fIn = new FileInputStream(selectedFilePath);
             BufferedReader br = new BufferedReader(new InputStreamReader(fIn));
             String line = br.readLine(); // reads the first line, or nothing
+            if (line == null || line.trim().length() == 0) {
+                throw new Exception("File is empty: " + selectedFilePath);
+            }
             String[] tokens = line.split(",");
             csvHandler.initModel(tokens);
         } catch (FileNotFoundException e) {
