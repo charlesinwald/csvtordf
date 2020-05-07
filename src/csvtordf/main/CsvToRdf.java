@@ -40,6 +40,7 @@ import javafx.application.Application;
 import org.apache.jena.base.Sys;
 import org.apache.jena.rdf.model.*;
 import org.apache.jena.shared.*;
+import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.xsd.*;
 
 // CLI parsing
@@ -54,10 +55,10 @@ import org.apache.commons.cli.*;
 
 class PropertyMetadata {
   public final boolean isLiteral;
-  public final XSDDatatype literalType;
+  public final RDFDatatype literalType;
   public final String objectURI;
   public boolean isSkipped;
-  public PropertyMetadata (boolean isLiteral, XSDDatatype literalType, String objectURI) {
+  public PropertyMetadata (boolean isLiteral, RDFDatatype literalType, String objectURI) {
     this.isLiteral = isLiteral;
     this.literalType = literalType;
     this.objectURI = objectURI;
@@ -157,6 +158,14 @@ public class CsvToRdf extends Object {
   // How many lines to process at a time per-thread
   // TBD: Make it configurable?
   private final int BATCH_SIZE = 100;
+
+  private static final String xsd[] = {"float", "double", "int", "long", "short", "byte", "unsignedByte", "unsignedShort",
+          "unsignedInt", "unsignedLong", "decimal", "integer", "nonPositiveInteger",
+          "nonNegativeInteger", "positiveInteger", "negativeInteger", "Boolean", "string",
+          "normalizedString", "anyURI", "token", "Name", "QName", "language", "NMTOKEN", "ENTITIES",
+          "NMTOKENS", "ENTITY", "ID", "NCName", "IDREF", "IDREFS", "NOTATION", "hexBinary",
+          "base64Binary", "date", "time", "dateTime", "duration", "gDay", "gMonth", "gYear",
+          "gYearMonth", "gMonthDay:"};
 
   static {
     org.apache.jena.atlas.logging.LogCtl.setCmdLogging();
@@ -272,7 +281,12 @@ public class CsvToRdf extends Object {
       String[] tokens = line.split(",");
 
       for (int i=0; i < tokens.length; i++) {
-        XSDDatatype datatype = new XSDDatatype(tokens[i]);
+        RDFDatatype datatype;
+        if (Arrays.asList(xsd).contains(tokens[i])) {
+          datatype = new XSDDatatype(tokens[i]);
+        } else {
+          datatype = new XSDDatatype("string");
+        }
         propData.set(i, new PropertyMetadata(true, datatype, null));
       }
 
@@ -297,7 +311,18 @@ public class CsvToRdf extends Object {
     int idx = properties.indexOf(property);
     if (idx >= 0) {
       if (isLiteral) {
-        XSDDatatype type = new XSDDatatype(uri);
+        RDFDatatype type;
+        if (uri.equals("")) {
+          type = new XSDDatatype("string");
+        }
+        else if (Arrays.asList(xsd).contains(uri)) {
+          type = new XSDDatatype(uri);
+        } else {
+//          TODO: allow user-defined datatypes
+          type = new XSDDatatype("string");
+//          type = model.createDatatype(prefix + uri);
+//          type.addEquivalentClass(XSD.string);
+        }
         propData.set(idx, new PropertyMetadata(true, type, null));
       } else {
         propData.set(idx, new PropertyMetadata(false, null, uri));
