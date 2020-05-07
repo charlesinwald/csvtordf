@@ -631,7 +631,7 @@ public class CsvWizard extends Application {
 
         Label rdfTypeLabel = new Label("RDF Type:");
         rdfTypeLabel.setPadding(new Insets(5, 5, 5, 5));
-        TextField rdfTypeField = new TextField();
+        TextField rdfTypeField = new TextField(csvHandler.getRdfType());
         rdfTypeField.setPrefColumnCount(30);
         setupVbox.getChildren().add(new HBox(rdfTypeLabel, rdfTypeField));
 
