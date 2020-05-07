@@ -578,13 +578,10 @@ public class CsvWizard extends Application {
         cb.getItems().addAll(xsd);
         cb.setEditable(true);
         cb.setPromptText("literal type...");
-
-        //tf.getParent().requestFocus();
-//        tf.setPrefColumnCount(20);
-	textFieldList.add(cb);
+	    textFieldList.add(cb);
 
         // Set hint depending on which radio button is selected
-   	r1.selectedProperty().addListener(new ChangeListener<Boolean>() {
+   	    r1.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> obs, Boolean wasSel, Boolean isSel) {
                 if(isSel) {
@@ -649,6 +646,10 @@ public class CsvWizard extends Application {
             String propType = textFieldList.get(i).getEditor().getText();
             if (propData.equals("Skip")) {
                 csvHandler.markSkipped(property);
+            } else if (propData.equals("Literal")) {
+                csvHandler.setDatatypesFromWizard(true, propType);
+            } else {
+                csvHandler.setDatatypesFromWizard(false, propType);
             }
             // TODO: Handle setting Resource properties in CsvToRdf
             System.out.println(property.toString() + " -> " + propData + " (" + propType + ")");
