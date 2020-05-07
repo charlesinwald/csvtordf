@@ -657,9 +657,7 @@ public class CsvWizard extends Application {
         Button continueButton = new Button("Continue");
         continueButton.setOnMouseClicked(event -> {
                     String rdfType = rdfTypeField.getText();
-                    if (!rdfType.equals("")) {
-                        csvHandler.setRdfType(rdfType);
-                    }
+                    csvHandler.setRdfType(rdfType);
 
                     int i = 0;
                     for (Property property : properties) {

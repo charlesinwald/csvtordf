@@ -111,13 +111,21 @@ class MultiThreadCsvProcessor implements Callable<Void> {
     // and performance was the same or worse. Batching/locking had the best results.
     model.enterCriticalSection(Lock.WRITE);
     try {
-      Resource rdfClass = model.createResource(rdfType);
-      rdfClass.addProperty(RDF.type, RDFS.Class);
+      Resource rdfClass;
+      if (!rdfType.equals("")) {
+        rdfClass = model.createResource(rdfType);
+        rdfClass.addProperty(RDF.type, RDFS.Class);
+      } else {
+        // TODO: Remove later if unused
+        rdfClass = model.createResource();
+      }
       for (int i = startNum; i <= endNum; i++) {
         if (CsvToRdf.g_verbosity >= 2) System.out.println("    Res " + i + ": " + Arrays.toString(tokens[i % arrayLength]));
         //The row is the subject
         Resource instance = model.createResource(prefix + "res" + i);
-        instance.addProperty(RDF.type, rdfClass);
+        if (!rdfType.equals("")) {
+          instance.addProperty(RDF.type, rdfClass);
+        }
         for (int j = 0; j < tokens[i % arrayLength].length; j++) {
           //jth property is the predicate
           //cell is the object
@@ -566,7 +574,9 @@ public class CsvToRdf extends Object {
    * @param p Type to use.
    */
   public void setRdfType(String p) {
-    if (!p.startsWith("http")) {
+    if (p.trim().length() == 0) {
+      p = ""; // no type
+    } else if (!p.startsWith("http")) {
       p = prefix + p;
     } else if(p.indexOf('#') >= 0) {
       // TBD: add prefix to model?
