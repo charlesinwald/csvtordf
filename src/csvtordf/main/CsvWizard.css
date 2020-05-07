@@ -90,3 +90,9 @@
 .scroll-bar:horizontal *.decrement-arrow .content {
     visibility: hidden;
 }
+
+#uri-label {
+    -fx-text-fill: black;
+    -fx-font-weight: bold;
+    -fx-start-margin: 10%;
+}

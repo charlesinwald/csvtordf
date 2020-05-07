@@ -202,7 +202,7 @@ public class CsvWizard extends Application {
                     errorAlert.showAndWait();
                 }
 
-		// Will either display model or clear window
+                // Will either display model or clear window
                 viewModel();
             }
         });
@@ -568,7 +568,7 @@ public class CsvWizard extends Application {
         ArrayList<ToggleGroup> toggleGroupList = new ArrayList<>();
         ArrayList<ComboBox<String>> textFieldList = new ArrayList<>();
         ArrayList<Property> properties = csvHandler.getProperties();
-        for (int i=0; i < properties.size(); i++){
+        for (int i = 0; i < properties.size(); i++) {
             Property property = properties.get(i);
             // Add row for each property
             ToggleGroup tg = new ToggleGroup();
@@ -619,7 +619,7 @@ public class CsvWizard extends Application {
                     }
                 }
             });
-            grid.addRow(i+1, r1, r2, r3, new Label(property.toString()), cb);
+            grid.addRow(i + 1, r1, r2, r3, new Label(property.toString()), cb);
         }
         ScrollPane hScrollPane = new ScrollPane();
         hScrollPane.setContent(grid);
@@ -639,7 +639,6 @@ public class CsvWizard extends Application {
         setupVbox.getChildren().add(objLabel);
         setupVbox.getChildren().add(hScrollPane);
 
-        boolean fieldMissing = false;
         Button continueButton = new Button("Continue");
         continueButton.setOnMouseClicked(event -> {
                     // TODO: Save RDF Type to set for every CSV line
@@ -647,38 +646,29 @@ public class CsvWizard extends Application {
                     for (Property property : properties) {
                         String propData = toggleGroupList.get(i).getSelectedToggle().getUserData().toString();
                         String propType = textFieldList.get(i).getEditor().getText();
-                        if (propData.equals("Skip")) {
-                            csvHandler.markSkipped(property);
-                        } else if (propData.equals("Literal")) {
-                            if (!propType.isEmpty()) {
-                                csvHandler.setDatatypes(property, true, propType);
-                            } 
-                            /*
-			    else {
-                                Alert errorAlert = new Alert(AlertType.ERROR);
-                                errorAlert.setHeaderText("Please specify a type for property ");
-                                errorAlert.setContentText(property.getLocalName());
-                                errorAlert.showAndWait();
-                                System.err.println("propType missing");
-                                fieldMissing = true;
-                            }
-                            */
-                        } else if (propData.equals("Resource")) {
-                            createResourceWizard(property);
-
-                        } else {
-                            csvHandler.setDatatypes(property, false, propType);
+                        switch (propData) {
+                            case "Skip":
+                                csvHandler.markSkipped(property);
+                                break;
+                            case "Literal":
+                                if (!propType.isEmpty()) {
+                                    csvHandler.setDatatypes(property, true, propType);
+                                }
+                                break;
+                            case "Resource":
+                                String resourceType = createResourceWizard(property);
+                                //TODO set property type as the created resource
+                                break;
+                            default:
+                                csvHandler.setDatatypes(property, false, propType);
+                                break;
                         }
                         // TODO: Handle setting Resource properties in CsvToRdf
                         System.out.println(property.toString() + " -> " + propData + " (" + propType + ")");
                         i++;
                     }
-                    // If the user forgot to fill in fields we want to let them go back and add them rather than
-                    // exiting the wizard
-                    // TODO allow for successful conversion if they go back and fill in the fields
-                    if (!fieldMissing) {
-                        setupStage.close();
-                    }
+
+                    setupStage.close();
                     modelLoaded = true;
                 }
         );
@@ -693,28 +683,55 @@ public class CsvWizard extends Application {
         setupStage.setScene(setupScene);
         setupStage.getIcons().add(iconImage);
         setupStage.showAndWait();
-        if(modelLoaded) {
-          System.out.println("FINISHED SETTING UP MODEL");
+        if (modelLoaded) {
+            System.out.println("FINISHED SETTING UP MODEL");
         } else {
-          System.out.println("CANCELLED");
+            System.out.println("CANCELLED");
         }
         return true;
     }
 
     /**
      * Window for creating a new resource for a given property
+     *
      * @param property property referring to this resource
      */
     //TODO finish this
-    private void createResourceWizard(Property property) {
+    private String createResourceWizard(Property property) {
         Stage resourceWizardStage = new Stage();
         resourceWizardStage.setTitle("Create New Resource");
         VBox resourceWizardVBox = new VBox();
-        resourceWizardVBox.getChildren().add(new Label("URI: \n" + property.getLocalName()));
-        Scene resourceWizardScene = new Scene(resourceWizardVBox, 480, 360);
+        GridPane gridPane = new GridPane();
+
+        Label uriLabel = new Label("Local URI: " + property.getLocalName());
+        Label fullUriLabel = new Label("Full URI: " + property.getURI());
+        uriLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        fullUriLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        gridPane.setPadding(new Insets(10, 10, 10, 10));
+        gridPane.add(uriLabel, 0, 0, 1, 1);
+        gridPane.add(fullUriLabel, 0, 0, 2, 2);
+
+        Label rdfTypeLabel = new Label("RDF Type:");
+        rdfTypeLabel.setPadding(new Insets(5, 5, 5, 5));
+        TextField rdfTypeField = new TextField();
+        rdfTypeField.setPrefColumnCount(30);
+        gridPane.add(new HBox(rdfTypeLabel, rdfTypeField), 1, 1);
+
+        Button continueButton = new Button("Create");
+        final String[] rdfTypeFieldText = {rdfTypeField.getText()};
+        continueButton.setOnMouseClicked(event -> {
+            rdfTypeFieldText[0] = rdfTypeField.getText();
+            resourceWizardStage.close();
+        });
+        gridPane.add(continueButton, 1, 1);
+
+        gridPane.setVgap(30);
+        resourceWizardVBox.getChildren().add(gridPane);
+        Scene resourceWizardScene = new Scene(resourceWizardVBox, 720, 480);
         resourceWizardStage.setScene(resourceWizardScene);
         resourceWizardStage.getIcons().add(iconImage);
         resourceWizardStage.showAndWait();
+        return rdfTypeFieldText[0];
     }
 }
 
