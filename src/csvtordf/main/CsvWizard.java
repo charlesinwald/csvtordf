@@ -642,7 +642,6 @@ public class CsvWizard extends Application {
         boolean fieldMissing = false;
         Button continueButton = new Button("Continue");
         continueButton.setOnMouseClicked(event -> {
-                    // TODO: Save RDF Type to set for every CSV line
                     String rdfType = rdfTypeField.getText();
                     if (!rdfType.equals("")) {
                         csvHandler.setRdfType(rdfType);
