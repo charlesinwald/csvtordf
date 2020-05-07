@@ -378,12 +378,12 @@ public class CsvWizard extends Application {
                     Property pred = stmt.getPredicate();
                     RDFNode obj = stmt.getObject();
                     // FIXME: Make this hardcoded type check prettier...
-	            if (pred.toString().equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")) {
+                    if (pred.toString().equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")) {
                         // Create class for object if none exists
                         OWLClass newClass = owlFactory.getOWLClass(IRI.create(obj.toString()));
                         // Add the triple assertion
                         newAxioms.add(owlFactory.getOWLClassAssertionAxiom(newClass, sub));
-		    } else if (obj.isResource()) {
+                    } else if (obj.isResource()) {
                         // Add predicate as ObjectProperty
                         OWLObjectProperty owlPred = owlFactory.getOWLObjectProperty(IRI.create(pred.getURI()));
                         newAxioms.add(owlFactory.getOWLDeclarationAxiom(owlPred));
