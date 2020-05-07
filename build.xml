@@ -412,25 +412,6 @@
             </batchtest>
         </junit>
     </target>
-<!--    <target name="jtest">-->
-<!--        <path id='classpath'>-->
-<!--            <fileset dir="${classes}/lib/junit" includes="**/*.jar" />-->
-<!--        </path>-->
-<!--        <junitlauncher>-->
-
-<!--            <classpath>-->
-<!--                <pathelement path="${classes}/lib/junit/*"/>-->
-<!--                &lt;!&ndash; the test classes themselves &ndash;&gt;-->
-<!--		    <pathelement path="${classes}/csvtordf/test/*"/>-->
-<!--		    <pathelement path="${classes}/csvtordf/main/*"/>-->
-<!--            </classpath>-->
-<!--	    <testclasses outputdir=".">-->
-<!--		    <fileset dir="${classes}/csvtordf/test/"/>-->
-<!--                <listener type="legacy-brief" sendSysOut="true"/>-->
-<!--                <listener type="legacy-xml" sendSysErr="true" sendSysOut="true"/>-->
-<!--            </testclasses>-->
-<!--        </junitlauncher>-->
-<!--</target>-->
 
     <!-- ===================================================================  -->
     <!-- DEBUG -->

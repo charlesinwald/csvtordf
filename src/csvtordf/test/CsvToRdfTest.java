@@ -27,6 +27,9 @@ public class CsvToRdfTest {
         CsvToRdf program = new CsvToRdf();
     }
 
+    /**
+     * Tests that single threaded and multithreaded reads work, and that invalid paths gracefully fail
+     */
     @Test
     public void readInputFile() {
         //Single threaded
@@ -126,6 +129,9 @@ public class CsvToRdfTest {
         program.printModel();
     }
 
+    /**
+     * Tests that the model can be outputted to STDOUT or input files
+     */
     @Test
     public void outputModel() {
         CsvToRdf program = new CsvToRdf();
@@ -145,6 +151,10 @@ public class CsvToRdfTest {
         assertTrue(Files.exists(Paths.get("testOutputFile")));
     }
 
+    /**
+     * Tests that clearing the model removes all statements
+     * Note: testing that skipped properties are skipped are tested for in markSkipped()
+     */
     @Test
     public void clearModel() {
         CsvToRdf program = new CsvToRdf();
@@ -157,6 +167,9 @@ public class CsvToRdfTest {
         assertFalse(iter2.hasNext());
     }
 
+    /**
+     * Tests both setPrefix and getPrefix
+     */
     @Test
     public void setPrefix() {
         CsvToRdf program = new CsvToRdf();
