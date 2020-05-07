@@ -63,6 +63,7 @@ import org.semanticweb.owlapi.rdf.turtle.parser.TurtleParser;
 import org.semanticweb.owlapi.model.*;
 import org.semanticweb.owlapi.model.parameters.ChangeApplied;
 import org.semanticweb.owlapi.rdf.rdfxml.parser.OWLRDFConsumer;
+import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import org.protege.editor.owl.model.*;
 import org.protege.editor.owl.ui.action.ProtegeOWLAction;
 
@@ -376,7 +377,13 @@ public class CsvWizard extends Application {
                     newAxioms.add(owlFactory.getOWLDeclarationAxiom(sub));
                     Property pred = stmt.getPredicate();
                     RDFNode obj = stmt.getObject();
-                    if (obj.isResource()) {
+                    // FIXME: Make this hardcoded type check prettier...
+	            if (pred.toString().equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")) {
+                        // Create class for object if none exists
+                        OWLClass newClass = owlFactory.getOWLClass(IRI.create(obj.toString()));
+                        // Add the triple assertion
+                        newAxioms.add(owlFactory.getOWLClassAssertionAxiom(newClass, sub));
+		    } else if (obj.isResource()) {
                         // Add predicate as ObjectProperty
                         OWLObjectProperty owlPred = owlFactory.getOWLObjectProperty(IRI.create(pred.getURI()));
                         newAxioms.add(owlFactory.getOWLDeclarationAxiom(owlPred));
@@ -390,7 +397,7 @@ public class CsvWizard extends Application {
                         OWLDataProperty owlPred = owlFactory.getOWLDataProperty(IRI.create(pred.getURI()));
                         newAxioms.add(owlFactory.getOWLDeclarationAxiom(owlPred));
                         // Add data triple assertion
-                        newAxioms.add(owlFactory.getOWLDataPropertyAssertionAxiom(owlPred, sub, owlFactory.getOWLLiteral(obj.toString())));
+                        newAxioms.add(owlFactory.getOWLDataPropertyAssertionAxiom(owlPred, sub, owlFactory.getOWLLiteral(obj.toString(), OWL2Datatype.RDF_PLAIN_LITERAL)));
                     }
                 }
                 // Need to add all at once or Protege can deadlock and throw exceptions.
@@ -632,6 +639,11 @@ public class CsvWizard extends Application {
         Label rdfTypeLabel = new Label("RDF Type:");
         rdfTypeLabel.setPadding(new Insets(5, 5, 5, 5));
         TextField rdfTypeField = new TextField(csvHandler.getRdfType());
+        if (runAsPlugin) {
+            // Use Protege IRI
+            String iri = modelManager.getActiveOntology().getOntologyID().getOntologyIRI().get().toString();
+            rdfTypeField.setText(iri + "#CsvNode");
+        }
         rdfTypeField.setPrefColumnCount(30);
         setupVbox.getChildren().add(new HBox(rdfTypeLabel, rdfTypeField));
 
