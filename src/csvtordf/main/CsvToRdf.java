@@ -565,7 +565,21 @@ public class CsvToRdf extends Object {
    *
    * @param p Type to use.
    */
-  public void setRdfType(String p) { rdfType = prefix + p; }
+  public void setRdfType(String p) {
+    if (!p.startsWith("http")) {
+      p = prefix + p;
+    } else if(p.indexOf('#') >= 0) {
+      // TBD: add prefix to model?
+    }
+    rdfType = p;
+  }
+
+  /**
+   * Get currently set rdf:type
+   *
+   * @return String - rdf:type for imported resources.
+   */
+  public String getRdfType() { return rdfType; }
 
   /**
    * Get Model Prefix.
