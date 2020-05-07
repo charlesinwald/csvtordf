@@ -42,6 +42,8 @@ import org.apache.jena.rdf.model.*;
 import org.apache.jena.shared.*;
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.xsd.*;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
 
 // CLI parsing
 import org.apache.commons.cli.*;
@@ -78,13 +80,15 @@ class MultiThreadCsvProcessor implements Callable<Void> {
   private Model model;
   private final ArrayList<Property> properties;
   private final ArrayList<PropertyMetadata> propData;
+  private final String rdfType;
 
-  public MultiThreadCsvProcessor(Model model, String prefix, ArrayList<Property> properties, ArrayList<PropertyMetadata> propData,
+  public MultiThreadCsvProcessor(Model model, String prefix, ArrayList<Property> properties, ArrayList<PropertyMetadata> propData, String rdfType,
 		                 String[] lines, int startNum, int endNum) {
     this.model = model;
     this.prefix = prefix;
     this.properties = properties;
     this.propData = propData;
+    this.rdfType = rdfType;
     this.lines = lines;
     this.startNum = startNum;
     this.endNum = endNum;
@@ -107,10 +111,13 @@ class MultiThreadCsvProcessor implements Callable<Void> {
     // and performance was the same or worse. Batching/locking had the best results.
     model.enterCriticalSection(Lock.WRITE);
     try {
+      Resource rdfClass = model.createResource(rdfType);
+      rdfClass.addProperty(RDF.type, RDFS.Class);
       for (int i = startNum; i <= endNum; i++) {
         if (CsvToRdf.g_verbosity >= 2) System.out.println("    Res " + i + ": " + Arrays.toString(tokens[i % arrayLength]));
         //The row is the subject
         Resource instance = model.createResource(prefix + "res" + i);
+        instance.addProperty(RDF.type, rdfClass);
         for (int j = 0; j < tokens[i % arrayLength].length; j++) {
           //jth property is the predicate
           //cell is the object
@@ -151,6 +158,7 @@ public class CsvToRdf extends Object {
   private ArrayList<PropertyMetadata> propData = new ArrayList<>();
   private Set<Property> skipProps = new HashSet<Property>();
   private String prefix = "http://example.org/csv#";
+  private String rdfType = prefix + "CsvNode";
 
   // Set once model is loaded the first time
   private boolean initialized = false;
@@ -368,14 +376,14 @@ public class CsvToRdf extends Object {
         num++;
         if (num % BATCH_SIZE == 0) {
           jobResults.add(service.submit(
-              new MultiThreadCsvProcessor(model, prefix, properties, propData,
+              new MultiThreadCsvProcessor(model, prefix, properties, propData, rdfType,
                                           linesArray, num - BATCH_SIZE, num - 1)));
         }
       }
       // Launch any remaining
       if (num % BATCH_SIZE != 0) {
         jobResults.add(service.submit(
-            new MultiThreadCsvProcessor(model, prefix, properties, propData,
+            new MultiThreadCsvProcessor(model, prefix, properties, propData, rdfType,
                                         linesArray, (num / BATCH_SIZE) * BATCH_SIZE, num - 1)));
       }
       // Wait for completion
@@ -551,6 +559,13 @@ public class CsvToRdf extends Object {
    *
    */
   public void setPrefix(String p) { prefix = p; }
+
+  /**
+   * Set rdf:type to use for generated nodes
+   *
+   * @param p Type to use.
+   */
+  public void setRdfType(String p) { rdfType = prefix + p; }
 
   /**
    * Get Model Prefix.

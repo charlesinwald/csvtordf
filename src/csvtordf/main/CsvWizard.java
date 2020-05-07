@@ -643,6 +643,11 @@ public class CsvWizard extends Application {
         Button continueButton = new Button("Continue");
         continueButton.setOnMouseClicked(event -> {
                     // TODO: Save RDF Type to set for every CSV line
+                    String rdfType = rdfTypeField.getText();
+                    if (!rdfType.equals("")) {
+                        csvHandler.setRdfType(rdfType);
+                    }
+
                     int i = 0;
                     for (Property property : properties) {
                         String propData = toggleGroupList.get(i).getSelectedToggle().getUserData().toString();
