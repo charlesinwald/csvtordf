@@ -568,6 +568,8 @@ public class CsvToRdf extends Object {
   public void setRdfType(String p) {
     if (!p.startsWith("http")) {
       p = prefix + p;
+    } else if(p.indexOf('#') >= 0) {
+      // TBD: add prefix to model?
     }
     rdfType = p;
   }
