@@ -558,7 +558,7 @@ public class CsvWizard extends Application {
         // Setup options include...
         // RDF Type for each entry-
         //    When run standalone, will create new resource for this type
-        //    When run through Protege, select from existing Ontology classes?
+        //    When run through Protege, select from existing Ontology classes
         // Option to skip header
         //    Perhaps there is a column that doesn't matter to the user, allow
         //    option to not include it. The property will already have been
@@ -656,13 +656,17 @@ public class CsvWizard extends Application {
 
         Label rdfTypeLabel = new Label("RDF Type:");
         rdfTypeLabel.setPadding(new Insets(5, 5, 5, 5));
-        TextField rdfTypeField = new TextField(csvHandler.getRdfType());
+        ComboBox<String> rdfTypeField = new ComboBox<String>();
+	rdfTypeField.setEditable(true);
+        rdfTypeField.getEditor().setPrefColumnCount(40);
         if (runAsPlugin) {
             // Use Protege IRI
             String iri = modelManager.getActiveOntology().getOntologyID().getOntologyIRI().get().toString();
-            rdfTypeField.setText(iri + "#CsvNode");
+            rdfTypeField.getEditor().setText(iri + "#CsvNode");
+            rdfTypeField.getItems().addAll(modelClasses);
+        } else {
+            rdfTypeField.getEditor().setText(csvHandler.getRdfType());
         }
-        rdfTypeField.setPrefColumnCount(30);
         setupVbox.getChildren().add(new HBox(rdfTypeLabel, rdfTypeField));
 
         Label objLabel = new Label("Select Object Properties:");
@@ -671,7 +675,7 @@ public class CsvWizard extends Application {
 
         Button continueButton = new Button("Continue");
         continueButton.setOnMouseClicked(event -> {
-                    String rdfType = rdfTypeField.getText();
+                    String rdfType = rdfTypeField.getEditor().getText();
                     csvHandler.setRdfType(rdfType);
 
                     int i = 0;
@@ -712,6 +716,7 @@ public class CsvWizard extends Application {
         buttonsHbox.setSpacing(10);
         setupVbox.getChildren().add(buttonsHbox);
         Scene setupScene = new Scene(setupVbox, 1024, 768);
+        setupScene.getStylesheets().add(getClass().getResource("CsvWizard.css").toExternalForm());
         setupStage.setScene(setupScene);
         setupStage.getIcons().add(iconImage);
         setupStage.showAndWait();
