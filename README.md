@@ -54,6 +54,16 @@ java -Dprism.order=sw csvtordf.main.CsvWizard
 ### Augmenting Input
 > Augment the input data to apply to all imported resources.
 
+![Augment CSV Data](images/augment.png)
+
+The following augmentation can be made before conversion:
+- *Set RDF Type* : set the RDF type to apply to each row in the CSV file.
+- *Set Property Type* : each property column in the CSV file can have one of the following applied:
+    - *SKIP* : Do not import this column into the RDF model.
+    - *LITERAL* : The cell values for this property column contain data literals. An optional literal type may be selected for this property.
+    - *RESOURCE* : The cell values for this property column refer to object resources. This will add new resources to the generated model. An optional RDF type may be specified for this property, which will be applied to all object resources of this property.
+
+
 ## Protege <a name="protege"></a>
 Prebuilt plugin packages have been provided and tested with Protege 5.5.0. Simply place the JAR file
 in the Protege plugins directory.
@@ -89,6 +99,7 @@ when Protege is next launched.
 ![Tools GIF](images/tools.gif)
 
 The generated RDF triples will be imported to the current Protege Ontology, creating new instances and properties as needed.
+The augmentation Wizard will allow users to select RDF types from classes defined in the Ontology. If a class is specified that does not exist, a new owl:Thing class will be created.
 
 ## Team <a name="team"></a>
 - [Cody D'Ambrosio](https://github.com/cjd218)
