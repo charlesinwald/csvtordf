@@ -58,12 +58,12 @@ import org.apache.commons.cli.*;
 class PropertyMetadata {
   public final boolean isLiteral;
   public final RDFDatatype literalType;
-  public final String objectURI;
+  public final String objectType;
   public boolean isSkipped;
-  public PropertyMetadata (boolean isLiteral, RDFDatatype literalType, String objectURI) {
+  public PropertyMetadata (boolean isLiteral, RDFDatatype literalType, String objectType) {
     this.isLiteral = isLiteral;
     this.literalType = literalType;
-    this.objectURI = objectURI;
+    this.objectType = objectType;
     this.isSkipped = false;
   }
 }
@@ -116,7 +116,7 @@ class MultiThreadCsvProcessor implements Callable<Void> {
         rdfClass = model.createResource(rdfType);
         rdfClass.addProperty(RDF.type, RDFS.Class);
       } else {
-        // TODO: Remove later if unused
+        // if unused, Jena won't write it out
         rdfClass = model.createResource();
       }
       for (int i = startNum; i <= endNum; i++) {
@@ -136,7 +136,17 @@ class MultiThreadCsvProcessor implements Callable<Void> {
               Literal l = model.createTypedLiteral(tokens[i % arrayLength][j], meta.literalType);
               instance.addProperty(property, l);
             } else {
-              instance.addProperty(property, tokens[i % arrayLength][j]);
+              // tokens[i%arrayLength][j] is an object. create new object for it.
+              // if it already exists, Jena will return the existing one
+              // TBD: Handle using resources of different prefix??
+              Resource objInstance = model.createResource(prefix + tokens[i % arrayLength][j]);
+              if (!meta.objectType.equals("")) {
+                  // Set type of this new resource
+                  Resource objClass = model.createResource(meta.objectType);
+                  objClass.addProperty(RDF.type, RDFS.Class);
+                  objInstance.addProperty(RDF.type, objClass);
+              }
+              instance.addProperty(property, objInstance);
             }
           }
         }
@@ -341,6 +351,9 @@ public class CsvToRdf extends Object {
         }
         propData.set(idx, new PropertyMetadata(true, type, null));
       } else {
+        if (!uri.startsWith("http")) {
+            uri = prefix + uri;
+        }
         propData.set(idx, new PropertyMetadata(false, null, uri));
       }
     }

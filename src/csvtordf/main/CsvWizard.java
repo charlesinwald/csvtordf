@@ -290,13 +290,13 @@ public class CsvWizard extends Application {
                     saveToOntology();
                 } else {
                     FileChooser fileChooser = new FileChooser();
-                    fileChooser.setTitle("Save " + selectedFileName + " as RDF");
+                    fileChooser.setTitle("Save " + selectedFileName);
                     //Specify we are saving RDF files here
                     List<String> supportedExts = Arrays.asList("*.rdf", "*.xml", "*.owl");
                     FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("RDF files (*.rdf, *.xml, *.owl)", supportedExts);
                     fileChooser.getExtensionFilters().add(extFilter);
                     //Default name for file is the input file's name
-                    fileChooser.setInitialFileName(selectedFileName + ".rdf");
+                    fileChooser.setInitialFileName(selectedFileName + ".xml");
 
                     //Show save file dialog
                     File file = fileChooser.showSaveDialog(null);
@@ -673,11 +673,11 @@ public class CsvWizard extends Application {
                                 }
                                 break;
                             case "Resource":
-                                String resourceType = createResourceWizard(property);
-                                //TODO set property type as the created resource
+                                //propType will be RDF type of created resources
+                                csvHandler.setDatatypes(property, false, propType);
                                 break;
                             default:
-                                csvHandler.setDatatypes(property, false, propType);
+                                csvHandler.setDatatypes(property, true, propType);
                                 break;
                         }
                         // TODO: Handle setting Resource properties in CsvToRdf
@@ -708,47 +708,5 @@ public class CsvWizard extends Application {
         return true;
     }
 
-    /**
-     * Window for creating a new resource for a given property
-     *
-     * @param property property referring to this resource
-     */
-    //TODO finish this
-    private String createResourceWizard(Property property) {
-        Stage resourceWizardStage = new Stage();
-        resourceWizardStage.setTitle("Create New Resource");
-        VBox resourceWizardVBox = new VBox();
-        GridPane gridPane = new GridPane();
-
-        Label uriLabel = new Label("Local URI: " + property.getLocalName());
-        Label fullUriLabel = new Label("Full URI: " + property.getURI());
-        uriLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        fullUriLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        gridPane.setPadding(new Insets(10, 10, 10, 10));
-        gridPane.add(uriLabel, 0, 0, 1, 1);
-        gridPane.add(fullUriLabel, 0, 0, 2, 2);
-
-        Label rdfTypeLabel = new Label("RDF Type:");
-        rdfTypeLabel.setPadding(new Insets(5, 5, 5, 5));
-        TextField rdfTypeField = new TextField();
-        rdfTypeField.setPrefColumnCount(30);
-        gridPane.add(new HBox(rdfTypeLabel, rdfTypeField), 1, 1);
-
-        Button continueButton = new Button("Create");
-        final String[] rdfTypeFieldText = {rdfTypeField.getText()};
-        continueButton.setOnMouseClicked(event -> {
-            rdfTypeFieldText[0] = rdfTypeField.getText();
-            resourceWizardStage.close();
-        });
-        gridPane.add(continueButton, 1, 1);
-
-        gridPane.setVgap(30);
-        resourceWizardVBox.getChildren().add(gridPane);
-        Scene resourceWizardScene = new Scene(resourceWizardVBox, 720, 480);
-        resourceWizardStage.setScene(resourceWizardScene);
-        resourceWizardStage.getIcons().add(iconImage);
-        resourceWizardStage.showAndWait();
-        return rdfTypeFieldText[0];
-    }
 }
 
