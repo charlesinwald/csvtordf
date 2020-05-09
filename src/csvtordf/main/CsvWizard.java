@@ -378,7 +378,7 @@ public class CsvWizard extends Application {
                     newAxioms.add(owlFactory.getOWLDeclarationAxiom(sub));
                     Property pred = stmt.getPredicate();
                     RDFNode obj = stmt.getObject();
-                    // FIXME: Make this hardcoded type check prettier...
+                    // TBD: Make this hardcoded type check prettier...
                     if (pred.toString().equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")) {
                         // Create class for object if none exists
                         OWLClass newClass = owlFactory.getOWLClass(IRI.create(obj.toString()));
@@ -735,7 +735,6 @@ public class CsvWizard extends Application {
                             csvHandler.markAsLabel(property); // Use this property for URI naming
                         }
 
-                        // TODO: Handle setting Resource properties in CsvToRdf
                         System.out.println(property.toString() + " -> " + propData + " (" + propType + ")");
                         i++;
                     }

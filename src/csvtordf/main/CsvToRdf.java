@@ -317,7 +317,6 @@ public class CsvToRdf extends Object {
    * @return boolean - true if successful, false otherwise
    */
   public boolean readMetadataFile(String inputFilePath) {
-    // FIXME: Verify metadata file is same length as CSV data file
     try {
       FileInputStream fIn = new FileInputStream(inputFilePath);
       BufferedReader br = new BufferedReader(new InputStreamReader(fIn));
