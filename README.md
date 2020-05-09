@@ -68,7 +68,7 @@ The following augmentation can be made before conversion:
 Prebuilt plugin packages have been provided and tested with Protege 5.5.0. Simply place the JAR file
 in the Protege plugins directory.
 - Windows: [csvtordf-plugin-windows.jar](builds/csvtordf-plugin-windows.jar)
-- Mac: [csvtordf-plugin-mac.jar](builds/csvtordf-plugin-mac.jar)
+- Mac: ~~[csvtordf-plugin-mac.jar](builds/csvtordf-plugin-mac.jar)~~ (not available at this time) 
 - Linux: [csvtordf-plugin-linux.jar](builds/csvtordf-plugin-linux.jar)
 
 ### Build Plugin <a name="buildplugin"></a>
