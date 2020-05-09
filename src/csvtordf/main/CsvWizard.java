@@ -50,6 +50,7 @@ import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.geometry.Orientation;
 import javafx.event.*;
 
 // Jena Imports
@@ -582,13 +583,18 @@ public class CsvWizard extends Application {
         grid.setHgap(10);
         grid.setVgap(10);
         grid.setPadding(new Insets(10, 10, 10, 10));
-        grid.addRow(0, new Label("Skip"), new Label("Literal"), new Label("Resource"), new Label("Property"), new Label("Type"));
+        grid.addRow(0, new Label("URI Label"), new Separator(Orientation.VERTICAL), new Label("Skip"), new Label("Literal"), new Label("Resource"), new Label("Property"), new Label("Type"));
         ArrayList<ToggleGroup> toggleGroupList = new ArrayList<>();
         ArrayList<ComboBox<String>> textFieldList = new ArrayList<>();
         ArrayList<Property> properties = csvHandler.getProperties();
-        for (int i = 0; i < properties.size(); i++) {
-            Property property = properties.get(i);
+        ToggleGroup labelGroup = new ToggleGroup();
+        int pIdx = 0;
+        for (pIdx = 0; pIdx < properties.size(); pIdx++) {
+            Property property = properties.get(pIdx);
             // Add row for each property
+            RadioButton labelRb = new RadioButton();
+            labelRb.setUserData(property.toString());
+            labelRb.setToggleGroup(labelGroup);
             ToggleGroup tg = new ToggleGroup();
             RadioButton r1 = new RadioButton();
             r1.setUserData("Skip");
@@ -644,10 +650,30 @@ public class CsvWizard extends Application {
                     }
                 }
             });
-            grid.addRow(i + 1, r1, r2, r3, new Label(property.toString()), cb);
+            grid.addRow(pIdx + 1, labelRb, new Separator(Orientation.VERTICAL), r1, r2, r3, new Label(property.toString()), cb);
         }
+        RadioButton labRb = new RadioButton();
+        labRb.setUserData("CUSTOM");
+        labRb.setSelected(true);
+        labRb.setToggleGroup(labelGroup);
+        TextField customLabelField = new TextField();
+        customLabelField.setPromptText("custom numbered labeling...");
+        customLabelField.setPrefColumnCount(30);
+        labRb.selectedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> obs, Boolean wasSel, Boolean isSel) {
+                if (isSel) { customLabelField.setDisable(false); }
+                else if (wasSel) { customLabelField.setDisable(true); }
+            }
+        });
+        HBox customLabelHbox = new HBox(labRb, customLabelField);
+        customLabelHbox.setSpacing(10);
+        customLabelHbox.setPadding(new Insets(10));
+        VBox scrollVbox = new VBox(grid, customLabelHbox);
+        scrollVbox.setSpacing(10);
+        scrollVbox.setPadding(new Insets(10));
         ScrollPane hScrollPane = new ScrollPane();
-        hScrollPane.setContent(grid);
+        hScrollPane.setContent(scrollVbox);
         hScrollPane.setPannable(true);
 
         VBox setupVbox = new VBox();
@@ -678,10 +704,14 @@ public class CsvWizard extends Application {
                     String rdfType = rdfTypeField.getEditor().getText();
                     csvHandler.setRdfType(rdfType);
 
+                    // Used to determine URI labeling
+                    String labelProp = labelGroup.getSelectedToggle().getUserData().toString();
+
                     int i = 0;
                     for (Property property : properties) {
                         String propData = toggleGroupList.get(i).getSelectedToggle().getUserData().toString();
                         String propType = textFieldList.get(i).getEditor().getText();
+
                         switch (propData) {
                             case "Skip":
                                 csvHandler.markSkipped(property);
@@ -699,11 +729,21 @@ public class CsvWizard extends Application {
                                 csvHandler.setDatatypes(property, true, propType);
                                 break;
                         }
+
+                        if (property.toString().equals(labelProp)) {
+                            System.err.println("Using for label: " + property.toString());
+                            csvHandler.markAsLabel(property); // Use this property for URI naming
+                        }
+
                         // TODO: Handle setting Resource properties in CsvToRdf
                         System.out.println(property.toString() + " -> " + propData + " (" + propType + ")");
                         i++;
                     }
 
+                    // Determine URI labeling to use
+                    if (labelProp.equals("CUSTOM") && !customLabelField.getText().isEmpty()) {
+                        csvHandler.setUriLabel(customLabelField.getText());
+                    }
                     setupStage.close();
                     modelLoaded = true;
                 }

@@ -60,11 +60,13 @@ class PropertyMetadata {
   public final RDFDatatype literalType;
   public final String objectType;
   public boolean isSkipped;
+  public boolean useAsLabel;
   public PropertyMetadata (boolean isLiteral, RDFDatatype literalType, String objectType) {
     this.isLiteral = isLiteral;
     this.literalType = literalType;
     this.objectType = objectType;
     this.isSkipped = false;
+    this.useAsLabel = false;
   }
 }
 
@@ -76,16 +78,18 @@ class PropertyMetadata {
 class MultiThreadCsvProcessor implements Callable<Void> {
   private final String[] lines;
   private final String prefix;
+  private final String label;
   private final int startNum, endNum;
   private Model model;
   private final ArrayList<Property> properties;
   private final ArrayList<PropertyMetadata> propData;
   private final String rdfType;
 
-  public MultiThreadCsvProcessor(Model model, String prefix, ArrayList<Property> properties, ArrayList<PropertyMetadata> propData, String rdfType,
+  public MultiThreadCsvProcessor(Model model, String prefix, String label, ArrayList<Property> properties, ArrayList<PropertyMetadata> propData, String rdfType,
 		                 String[] lines, int startNum, int endNum) {
     this.model = model;
     this.prefix = prefix;
+    this.label = label;
     this.properties = properties;
     this.propData = propData;
     this.rdfType = rdfType;
@@ -98,12 +102,27 @@ class MultiThreadCsvProcessor implements Callable<Void> {
     int arrayLength = lines.length;
     // Do as much parsing outside the critical section as possible
     String[][] tokens = new String[arrayLength][];
+    String[] labels = new String[arrayLength];
+    int labelIdx = -1;
+    // See if any property is set to be used as URI label
+    for (int i = 0; i < propData.size(); i++) {
+        if (propData.get(i).useAsLabel) {
+            labelIdx = i;
+            break;
+        }
+    }
     for (int i = startNum; i <= endNum; i++) {
       tokens[i % arrayLength] = lines[i % arrayLength].split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
       if (tokens[i % arrayLength].length < properties.size()) {
         throw new Exception("Line " + (i+1) + " too short, should contain " + properties.size() + " fields");
       } else if (tokens[i % arrayLength].length > properties.size()) {
         throw new Exception("Line " + (i+1) + " too long, should contain " + properties.size() + " fields");
+      }
+
+      if (labelIdx >= 0) {
+          labels[i % arrayLength] = prefix + tokens[i % arrayLength][labelIdx];
+      } else {
+          labels[i % arrayLength] = prefix + this.label + i;
       }
     }
 
@@ -120,9 +139,8 @@ class MultiThreadCsvProcessor implements Callable<Void> {
         rdfClass = model.createResource();
       }
       for (int i = startNum; i <= endNum; i++) {
-        if (CsvToRdf.g_verbosity >= 2) System.out.println("    Res " + i + ": " + Arrays.toString(tokens[i % arrayLength]));
         //The row is the subject
-        Resource instance = model.createResource(prefix + "res" + i);
+        Resource instance = model.createResource(labels[i % arrayLength]);
         if (!rdfType.equals("")) {
           instance.addProperty(RDF.type, rdfClass);
         }
@@ -177,6 +195,7 @@ public class CsvToRdf extends Object {
   private Set<Property> skipProps = new HashSet<Property>();
   private String prefix = "http://example.org/csv#";
   private String rdfType = prefix + "CsvNode";
+  private String uriLabel = "line";
 
   // Set once model is loaded the first time
   private boolean initialized = false;
@@ -397,14 +416,14 @@ public class CsvToRdf extends Object {
         num++;
         if (num % BATCH_SIZE == 0) {
           jobResults.add(service.submit(
-              new MultiThreadCsvProcessor(model, prefix, properties, propData, rdfType,
+              new MultiThreadCsvProcessor(model, prefix, uriLabel, properties, propData, rdfType,
                                           linesArray, num - BATCH_SIZE, num - 1)));
         }
       }
       // Launch any remaining
       if (num % BATCH_SIZE != 0) {
         jobResults.add(service.submit(
-            new MultiThreadCsvProcessor(model, prefix, properties, propData, rdfType,
+            new MultiThreadCsvProcessor(model, prefix, uriLabel, properties, propData, rdfType,
                                         linesArray, (num / BATCH_SIZE) * BATCH_SIZE, num - 1)));
       }
       // Wait for completion
@@ -477,6 +496,20 @@ public class CsvToRdf extends Object {
     int idx = properties.indexOf(property);
     if (idx >= 0) {
         propData.get(idx).isSkipped = true;
+    }
+  }
+
+  /**
+   *
+   * Mark a property to be used as the label for the URI.
+   *
+   * @param property Property to use value of for labelling
+   *
+   */
+  public void markAsLabel(Property property) {
+    int idx = properties.indexOf(property);
+    if (idx >= 0) {
+        propData.get(idx).useAsLabel = true;
     }
   }
 
@@ -595,6 +628,15 @@ public class CsvToRdf extends Object {
       // TBD: add prefix to model?
     }
     rdfType = p;
+  }
+
+  /**
+   * Set the URI label to use (will be numbered per line)
+   *
+   * @ param l Label to use.
+   */
+  public void setUriLabel(String l) {
+    uriLabel = l;
   }
 
   /**

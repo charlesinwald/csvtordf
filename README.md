@@ -62,7 +62,9 @@ The following augmentation can be made before conversion:
     - *SKIP* : Do not import this column into the RDF model.
     - *LITERAL* : The cell values for this property column contain data literals. An optional literal type may be selected for this property.
     - *RESOURCE* : The cell values for this property column refer to object resources. This will add new resources to the generated model. An optional RDF type may be specified for this property, which will be applied to all object resources of this property.
-
+- **SET URI Labeling** : Can determine the URI labeling convention in one of two ways:
+    - Selecting a property whose corresponding cell value will be used as the URI
+    - Define a custom label, which will have the CSV line number appended to it
 
 ## Protege <a name="protege"></a>
 Prebuilt plugin packages have been provided and tested with Protege 5.5.0. Simply place the JAR file
