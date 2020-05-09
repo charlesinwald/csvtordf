@@ -546,8 +546,16 @@ public class CsvWizard extends Application {
             }
         }
 
-        // TODO: Set up rest of stage for augmenting data
-        // Setup options should include...
+        ArrayList<String> modelClasses = new ArrayList<>();
+        if (runAsPlugin) {
+            // get list of object types for later
+            Set<OWLClass> owlClasses = modelManager.getActiveOntology().getClassesInSignature();
+            for (OWLClass ocls : owlClasses) {
+                modelClasses.add(ocls.toStringID());
+            }
+        }
+
+        // Setup options include...
         // RDF Type for each entry-
         //    When run standalone, will create new resource for this type
         //    When run through Protege, select from existing Ontology classes?
@@ -604,6 +612,7 @@ public class CsvWizard extends Application {
                 @Override
                 public void changed(ObservableValue<? extends Boolean> obs, Boolean wasSel, Boolean isSel) {
                     if (isSel) {
+                        // SKIP
                         cb.setPromptText("");
                         cb.setDisable(true);
                     }
@@ -613,6 +622,8 @@ public class CsvWizard extends Application {
                 @Override
                 public void changed(ObservableValue<? extends Boolean> obs, Boolean wasSel, Boolean isSel) {
                     if (isSel) {
+                        // LITERAL
+                        cb.getItems().clear();
                         cb.getItems().addAll(xsd);
                         cb.setPromptText("literal type...");
                         cb.setDisable(false);
@@ -623,7 +634,11 @@ public class CsvWizard extends Application {
                 @Override
                 public void changed(ObservableValue<? extends Boolean> obs, Boolean wasSel, Boolean isSel) {
                     if (isSel) {
+                        // RESOURCE
                         cb.getItems().clear();
+                        if (runAsPlugin) {
+                            cb.getItems().addAll(modelClasses);
+                        }
                         cb.setPromptText("resource type...");
                         cb.setDisable(false);
                     }
