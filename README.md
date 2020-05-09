@@ -57,8 +57,8 @@ java -Dprism.order=sw csvtordf.main.CsvWizard
 ![Augment CSV Data](images/augment.png)
 
 The following augmentation can be made before conversion:
-- *Set RDF Type* : set the RDF type to apply to each row in the CSV file.
-- *Set Property Type* : each property column in the CSV file can have one of the following applied:
+- **Set RDF Type** : set the RDF type to apply to each row in the CSV file.
+- **Set Property Type** : each property column in the CSV file can have one of the following applied:
     - *SKIP* : Do not import this column into the RDF model.
     - *LITERAL* : The cell values for this property column contain data literals. An optional literal type may be selected for this property.
     - *RESOURCE* : The cell values for this property column refer to object resources. This will add new resources to the generated model. An optional RDF type may be specified for this property, which will be applied to all object resources of this property.
