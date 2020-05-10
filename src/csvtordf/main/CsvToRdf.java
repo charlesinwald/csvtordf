@@ -425,7 +425,7 @@ public class CsvToRdf extends Object {
         if (num % BATCH_SIZE == 0) {
           jobResults.add(service.submit(
               new MultiThreadCsvProcessor(model, prefix, uriLabel, properties, propData, rdfType,
-                                          linesArray, num - BATCH_SIZE, num - 1)));
+                                          Arrays.copyOf(linesArray, BATCH_SIZE), num - BATCH_SIZE, num - 1)));
         }
       }
       // Launch any remaining
