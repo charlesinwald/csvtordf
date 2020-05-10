@@ -62,7 +62,6 @@ public class CsvToRdfTest {
         program.readInputFile("samples/sample.csv", processors);
         ArrayList<Property> properties = program.getProperties();
         Property propertyToSkip = properties.get(1);
-        System.err.println(propertyToSkip);
 
         File file = new File("testOutputFile");
         try {
