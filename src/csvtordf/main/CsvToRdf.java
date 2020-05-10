@@ -197,6 +197,9 @@ public class CsvToRdf extends Object {
   private String rdfType = prefix + "CsvNode";
   private String uriLabel = "line";
 
+  // Number of beginning-of-file lines to skip while parsing
+  private int numSkipLines = 0;
+
   // Set once model is loaded the first time
   private boolean initialized = false;
 
@@ -390,6 +393,12 @@ public class CsvToRdf extends Object {
       //Construct buffered reader from supplied command line argument of file path
       FileInputStream fIn = new FileInputStream(inputFilePath);
       BufferedReader br = new BufferedReader(new InputStreamReader(fIn));
+
+      // Skip lines as specified by user
+
+      for (int i = 0; i < numSkipLines; ++i) {
+        br.readLine(); // discard line
+      }
 
       // Get header line (first line)
       String line = br.readLine(); // reads the first line, or nothing
@@ -636,6 +645,17 @@ public class CsvToRdf extends Object {
    */
   public void setUriLabel(String l) {
     uriLabel = l;
+  }
+
+  /**
+   * Set the number of beginning-of-file lines to be skipped
+   * This is useful if a CSV file has comments on the first n lines
+   * prior to actual rows
+   *
+   * @param n Number of lines to skip.
+   */
+  public void setNumSkipLines(int n) {
+    numSkipLines = n;
   }
 
   /**

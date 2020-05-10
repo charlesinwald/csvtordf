@@ -44,12 +44,14 @@ import javafx.scene.control.Alert.*;
 import javafx.scene.control.ButtonType.*;
 import javafx.scene.image.Image;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.util.converter.NumberStringConverter;
 import javafx.geometry.Orientation;
 import javafx.event.*;
 
@@ -84,6 +86,7 @@ public class CsvWizard extends Application {
     private static final int DEFAULT_NUMBER_OF_THREADS = 1;
     //The maximum amount of threads they should be able to run
     int processors = Runtime.getRuntime().availableProcessors();
+    private int linesToSkip;
     private String selectedFilePath;
     private CheckBox interactiveCheckBox;
     private int numberOfThreads = DEFAULT_NUMBER_OF_THREADS;
@@ -159,6 +162,13 @@ public class CsvWizard extends Application {
         currentFile.setAlignment(Pos.CENTER_RIGHT);
         currentFile.setPadding(new Insets(5, 5, 5, 5));
 
+        Label skipLines = new Label("Beginning-of-file lines to skip:");
+        skipLines.setId("skipline-label");
+        skipLines.setAlignment(Pos.CENTER_RIGHT);
+        skipLines.setPadding(new Insets(5, 5, 5, 5));
+        skipLines.setTextFill(Color.web(("#ffffff")));
+        skipLines.setVisible(false);
+
         TextField prefixField = new TextField(csvHandler.getPrefix());
         prefixField.setId("prefix-field");
         prefixField.setPrefColumnCount(30);
@@ -169,6 +179,14 @@ public class CsvWizard extends Application {
             prefixField.setDisable(true);
         }
 
+        // Only accept numbers
+        TextField skipLinesField = new TextField("0");
+        skipLinesField.setId("skipline-field");
+        skipLinesField.setPrefColumnCount(5);
+        skipLinesField.setTextFormatter(new TextFormatter<>(new NumberStringConverter()));
+        skipLinesField.setVisible(false);
+
+
         Button submit = new Button("Convert");
         submit.setPrefSize(100, 20);
         submit.setId("submit-button");
@@ -177,6 +195,13 @@ public class CsvWizard extends Application {
             public void handle(ActionEvent e) {
                 csvHandler.clearModel(); // clear out any previous
                 csvHandler.setPrefix(prefixField.getText());
+                String numLinesToSkip = skipLinesField.getText();
+                if (numLinesToSkip.equals("")) {
+                    linesToSkip = 0;
+                } else {
+                    linesToSkip = Integer.valueOf(numLinesToSkip);
+                }
+                csvHandler.setNumSkipLines(linesToSkip);
                 boolean setupFailed = false;
                 if (!setupModelProperties()) {
                     setupFailed = true;
@@ -227,6 +252,8 @@ public class CsvWizard extends Application {
                     System.out.println(selectedFilePath);
                     currentFile.setText("CSV File: " + selectedFilePath);
                     submit.setVisible(true);
+                    skipLines.setVisible(true);
+                    skipLinesField.setVisible(true);
                 }
             }
         });
@@ -238,7 +265,7 @@ public class CsvWizard extends Application {
         hbox.setStyle("-fx-background-color: #595959;");
 
 
-        hbox.getChildren().addAll(l, prefixField, openfile, currentFile, submit);
+        hbox.getChildren().addAll(l, prefixField, openfile, currentFile, skipLines, skipLinesField, submit);
 
         return hbox;
     }
@@ -525,6 +552,9 @@ public class CsvWizard extends Application {
         try {
             FileInputStream fIn = new FileInputStream(selectedFilePath);
             BufferedReader br = new BufferedReader(new InputStreamReader(fIn));
+            for (int i = 0; i < linesToSkip; ++i) {
+                br.readLine(); // discard line
+            }
             String line = br.readLine(); // reads the first line, or nothing
             if (line == null || line.trim().length() == 0) {
                 throw new Exception("File is empty: " + selectedFilePath);
