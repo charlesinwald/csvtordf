@@ -21,10 +21,6 @@ public class CsvToRdfTest {
 
     /* Basic functionality */
 
-    @Test
-    public void main() {
-        CsvToRdf program = new CsvToRdf();
-    }
 
     /**
      * Tests that single threaded and multithreaded reads work, and that invalid paths gracefully fail
@@ -239,26 +235,6 @@ public class CsvToRdfTest {
         program.outputModel("testOutputFile");
         assertTrue(Files.exists(Paths.get("testOutputFile")));
         assertNull(program.getLastErrorMsg());
-    }
-
-    @Test
-    public void readAugmentationMetadata() {
-
-    }
-
-    @Test
-    public void initModelUsingMetadata() {
-
-    }
-
-    @Test
-    public void loadOntology() {
-
-    }
-
-    @Test
-    public void initModelUsingOntologyMetadata() {
-
     }
 
 
