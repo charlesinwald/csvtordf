@@ -34,12 +34,12 @@ public class CsvToRdfTest {
     public void readInputFile() {
         //Single threaded
         CsvToRdf program = new CsvToRdf();
-        boolean result = program.readInputFile("sample",1);
+        boolean result = program.readInputFile("samples/sample.csv",1);
         assertTrue(result);
 
         //Multithreaded
         int processors = Runtime.getRuntime().availableProcessors();
-        boolean result2 = program.readInputFile("sample", processors);
+        boolean result2 = program.readInputFile("samples/sample.csv", processors);
         assertTrue(result2);
 
         //Invalid paths should gracefully fail
@@ -125,7 +125,7 @@ public class CsvToRdfTest {
     @Test
     public void printModel() {
         CsvToRdf program = new CsvToRdf();
-        program.readInputFile("sample",1);
+        program.readInputFile("samples/sample.csv",1);
         program.printModel();
     }
 
@@ -135,7 +135,7 @@ public class CsvToRdfTest {
     @Test
     public void outputModel() {
         CsvToRdf program = new CsvToRdf();
-        program.readInputFile("sample",1);
+        program.readInputFile("samples/sample.csv",1);
 
         File file = new File("testOutputFile");
         try {
@@ -158,7 +158,7 @@ public class CsvToRdfTest {
     @Test
     public void clearModel() {
         CsvToRdf program = new CsvToRdf();
-        program.readInputFile("sample",1);
+        program.readInputFile("samples/sample.csv",1);
         assertNotNull(program.getModel());
         StmtIterator iter = program.getModel().listStatements();
         assertTrue(iter.hasNext());
@@ -173,7 +173,7 @@ public class CsvToRdfTest {
     @Test
     public void setPrefix() {
         CsvToRdf program = new CsvToRdf();
-        program.readInputFile("sample",1);
+        program.readInputFile("samples/sample.csv",1);
         program.setPrefix("test-prefix");
         assertEquals(program.getPrefix(),"test-prefix");
     }
@@ -182,17 +182,22 @@ public class CsvToRdfTest {
     @Test
     public void getModel() {
         CsvToRdf program = new CsvToRdf();
-        program.readInputFile("sample",1);
+        program.readInputFile("samples/sample.csv",1);
         assertNotNull(program.getModel());
     }
 
     @Test
     public void getProperties() {
-
+        CsvToRdf program = new CsvToRdf();
+        program.readInputFile("samples/sample.csv", 1);
+        ArrayList<Property> properties = program.getProperties();
+        assertEquals(properties.get(0).getLocalName(), "Name");
+        assertEquals(properties.get(1).getLocalName(), "Code");
     }
 
     @Test
     public void getLastExecTime() {
+
     }
 
     @Test
