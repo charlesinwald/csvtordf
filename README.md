@@ -23,6 +23,11 @@ A sample script `buildrun.sh` is provided. Alternatively, this can be built manu
 3. $ javac src/csvtordf/main/!(CsvPlugin).java
 ```
 
+A "fat" Jar file, which contains all necessary libraries and can be executed from anywhere, can be generated with:
+```
+ant fatjar
+```
+
 ## Run <a name="run"></a>
 Prebuilt package has been provided and tested with JRE8.
 - [csvtordf.jar](builds/csvtordf.jar)

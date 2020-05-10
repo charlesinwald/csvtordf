@@ -100,6 +100,7 @@ public class CsvWizard extends Application {
     public boolean runAsPlugin = false;
     private String selectedFileName;
     private CsvToRdf csvHandler = new CsvToRdf();
+    private TextField skipLinesField = new TextField("0");
     private Image iconImage = new Image(CsvWizard.class.getResourceAsStream("icon.png"));
 
     /**
@@ -162,13 +163,6 @@ public class CsvWizard extends Application {
         currentFile.setAlignment(Pos.CENTER_RIGHT);
         currentFile.setPadding(new Insets(5, 5, 5, 5));
 
-        Label skipLines = new Label("Beginning-of-file lines to skip:");
-        skipLines.setId("skipline-label");
-        skipLines.setAlignment(Pos.CENTER_RIGHT);
-        skipLines.setPadding(new Insets(5, 5, 5, 5));
-        skipLines.setTextFill(Color.web(("#ffffff")));
-        skipLines.setVisible(false);
-
         TextField prefixField = new TextField(csvHandler.getPrefix());
         prefixField.setId("prefix-field");
         prefixField.setPrefColumnCount(30);
@@ -178,14 +172,6 @@ public class CsvWizard extends Application {
             prefixField.setText(iri);
             prefixField.setDisable(true);
         }
-
-        // Only accept numbers
-        TextField skipLinesField = new TextField("0");
-        skipLinesField.setId("skipline-field");
-        skipLinesField.setPrefColumnCount(5);
-        skipLinesField.setTextFormatter(new TextFormatter<>(new NumberStringConverter()));
-        skipLinesField.setVisible(false);
-
 
         Button submit = new Button("Convert");
         submit.setPrefSize(100, 20);
@@ -250,10 +236,8 @@ public class CsvWizard extends Application {
                     selectedFileName = selectedFile.getName().replaceFirst("[.][^.]+$", "");
                     selectedFilePath = selectedFile.getPath();
                     System.out.println(selectedFilePath);
-                    currentFile.setText("CSV File: " + selectedFilePath);
+                    currentFile.setText(selectedFilePath);
                     submit.setVisible(true);
-                    skipLines.setVisible(true);
-                    skipLinesField.setVisible(true);
                 }
             }
         });
@@ -265,7 +249,7 @@ public class CsvWizard extends Application {
         hbox.setStyle("-fx-background-color: #595959;");
 
 
-        hbox.getChildren().addAll(l, prefixField, openfile, currentFile, skipLines, skipLinesField, submit);
+        hbox.getChildren().addAll(l, prefixField, openfile, currentFile, submit);
 
         return hbox;
     }
@@ -302,6 +286,19 @@ public class CsvWizard extends Application {
             }
         });
         leftPane.getChildren().add(multithreadingSlider);
+
+        Label skipLines = new Label("Beginning-of-file lines to skip: ");
+        //skipLines.setId("skipline-label");
+        //skipLines.setAlignment(Pos.CENTER_RIGHT);
+        //skipLines.setPadding(new Insets(5, 5, 5, 5));
+        //skipLines.setTextFill(Color.web(("#ffffff")));
+
+        // Only accept numbers
+        skipLinesField.setId("skipline-field");
+        skipLinesField.setPrefColumnCount(5);
+        skipLinesField.setTextFormatter(new TextFormatter<>(new NumberStringConverter()));
+        skipLinesField.setText("0");
+        leftPane.getChildren().add(new HBox(skipLines, skipLinesField));
 
         execTimeLabel = new Label("Execution Time: N/A");
         execTimeLabel.setVisible(false);
@@ -477,7 +474,7 @@ public class CsvWizard extends Application {
             progStage.close();
             Alert notifySuccess = new Alert(AlertType.NONE,
                     "Successfully imported data to ontology", ButtonType.OK);
-            notifySuccess.show();
+            notifySuccess.showAndWait();
         });
         saveOntTask.setOnCancelled(event -> {
             progStage.close();
