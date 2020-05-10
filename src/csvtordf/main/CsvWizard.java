@@ -475,6 +475,9 @@ public class CsvWizard extends Application {
         progStage.setResizable(false);
         saveOntTask.setOnSucceeded(event -> {
             progStage.close();
+            Alert notifySuccess = new Alert(AlertType.NONE,
+                    "Successfully imported data to ontology", ButtonType.OK);
+            notifySuccess.show();
         });
         saveOntTask.setOnCancelled(event -> {
             progStage.close();
