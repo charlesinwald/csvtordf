@@ -197,7 +197,9 @@ public class CsvToRdfTest {
 
     @Test
     public void getLastExecTime() {
-
+        CsvToRdf program = new CsvToRdf();
+        program.readInputFile("samples/sample.csv", 1);
+        assertTrue(program.getLastExecTime() > 0);
     }
 
     @Test
