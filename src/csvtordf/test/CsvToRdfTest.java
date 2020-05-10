@@ -23,7 +23,6 @@ public class CsvToRdfTest {
 
     @Test
     public void main() {
-        System.out.println("Test");
         CsvToRdf program = new CsvToRdf();
     }
 
@@ -193,6 +192,7 @@ public class CsvToRdfTest {
         ArrayList<Property> properties = program.getProperties();
         assertEquals(properties.get(0).getLocalName(), "Name");
         assertEquals(properties.get(1).getLocalName(), "Code");
+        assertNull(program.getLastErrorMsg());
     }
 
     @Test
@@ -200,17 +200,45 @@ public class CsvToRdfTest {
         CsvToRdf program = new CsvToRdf();
         program.readInputFile("samples/sample.csv", 1);
         assertTrue(program.getLastExecTime() > 0);
+        assertNull(program.getLastErrorMsg());
     }
+
 
     @Test
     public void getLastErrorMsg() {
+        CsvToRdf program = new CsvToRdf();
+
+        program.readInputFile("samples/sample.csv", 1);
+        assertNull(program.getLastErrorMsg());
+
+        program.readInputFile("samples/notarealcsv.csv", 1);
+        assertEquals("File not found: samples/notarealcsv.csv",program.getLastErrorMsg());
     }
 
     /* Tests relating to our "stretch goal" features */
 
+    /**
+     * Assert that malicious.csv does not crash the program, and successfully outputs
+     */
     @Test
     public void initModelWithMaliciousInput() {
+        CsvToRdf program = new CsvToRdf();
+        program.readInputFile("samples/malicious.csv", 1);
+        assertNull(program.getLastErrorMsg());
 
+        File file = new File("testOutputFile");
+        try {
+            boolean result = Files.deleteIfExists(file.toPath());
+        } catch (IOException e) {
+
+        }
+        assertFalse(Files.exists(Paths.get("testOutputFile")));
+
+
+        program.outputModel("STDOUT");
+        program.outputModel("testOutputFile");
+        assertTrue(Files.exists(Paths.get("testOutputFile")));
+        assertNull(program.getLastErrorMsg());
     }
 
     @Test
