@@ -56,6 +56,9 @@ ant test
 
 ![MultiThreading GIF](images/multithreading.gif)
 
+### Skip Lines
+> A set number of lines from the beginning of the CSV file, such as comment lines, can be skipped if desired
+
 ### Saving
 > Save the generated RDF data to an XML file
 
