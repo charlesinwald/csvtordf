@@ -5,6 +5,7 @@ There is an abundance of widely available data sets across the web. Unfortunatel
 
 - [Build](#build)
 - [Run](#run)
+- [Test](#testing)
 - [Features](#features)
 - [Protege](#protege)
   - [Build Plugin](#buildplugin)
@@ -34,7 +35,11 @@ If building manually, the Application can be ran by:
 ```
 java -Dprism.order=sw csvtordf.main.CsvWizard
 ```
-
+## Testing <a name="testing"></a>
+The JUnit test suite can be ran by:
+```
+ant test
+```
 ## Features <a name="features"></a>
 ### Import CSV File
 > Select a CSV file to convert to RDF data. The headers will define the properties, and each subsequent row will be considered a new resource. A resource prefix may be specified as well.
@@ -94,6 +99,8 @@ $ ant install -v
 
 This will create the Plugin Jar and place it in the Protege plugins directory, available
 when Protege is next launched.
+
+
 
 ## Plugin Features <a name="pluginfeatures"></a>
 > The Plugin will be available under the Tools menu
