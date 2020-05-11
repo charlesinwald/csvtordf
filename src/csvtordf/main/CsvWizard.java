@@ -28,6 +28,7 @@ import java.lang.Boolean;
 import java.lang.Exception;
 
 // Java GUI
+import javax.swing.SwingUtilities;
 import javafx.concurrent.Task;
 import javafx.collections.FXCollections;
 import javafx.application.Application;
@@ -425,9 +426,7 @@ public class CsvWizard extends Application {
                         newAxioms.add(owlFactory.getOWLDataPropertyAssertionAxiom(owlPred, sub, owlFactory.getOWLLiteral(obj.toString(), OWL2Datatype.RDF_PLAIN_LITERAL)));
                     }
                 }
-                // Need to add all at once or Protege can deadlock and throw exceptions.
-                // This is a BUG in Protege/OWLAPI !!
-                // https://github.com/protegeproject/protege/issues/954
+                // Adding all at once is faster.
                 ChangeApplied status = ontManager.addAxioms(actOntology, newAxioms);
                 if (status == ChangeApplied.UNSUCCESSFULLY) {
                     throw new Exception("Failed to add new axioms");
@@ -491,8 +490,9 @@ public class CsvWizard extends Application {
         });
 
         progStage.show();
-        Thread t1 = new Thread(saveOntTask);
-        t1.start();
+
+        // Need to launch on Swing Thread, as Protege runs on Swing and not JavaFX
+        SwingUtilities.invokeLater(saveOntTask);
     }
 
     /**
